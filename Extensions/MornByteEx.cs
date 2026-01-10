@@ -1,9 +1,9 @@
 using System;
 using System.Text;
 
-namespace MornUtil
+namespace MornLib
 {
-    public static class MornByte
+    public static class MornByteEx
     {
         public static byte[] ToBytesBase64(this string text)
         {
@@ -14,7 +14,7 @@ namespace MornUtil
         {
             return Convert.ToBase64String(bytes);
         }
-        
+
         public static byte[] ToBytesUTF8(this string text)
         {
             return Encoding.UTF8.GetBytes(text);

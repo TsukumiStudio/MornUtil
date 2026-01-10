@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace MornUtil
+namespace MornLib
 {
     internal sealed class MornTextureSettingsEditorWindow : EditorWindow
     {

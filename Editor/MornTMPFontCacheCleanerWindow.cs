@@ -4,7 +4,7 @@ using TMPro;
 using UnityEditor;
 using UnityEngine;
 
-namespace MornUtil
+namespace MornLib
 {
     internal sealed class MornTMPFontCacheCleanerWindow : EditorWindow
     {

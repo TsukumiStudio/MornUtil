@@ -2,7 +2,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-namespace MornUtil
+namespace MornLib
 {
     internal sealed class MornSimpleImageGeneratorWindow : EditorWindow
     {

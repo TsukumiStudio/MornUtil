@@ -2,7 +2,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-namespace MornUtil
+namespace MornLib
 {
     public static class MornAnimatorEx
     {

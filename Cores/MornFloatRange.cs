@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace MornUtil
+namespace MornLib
 {
     [Serializable]
     public struct MornFloatRange

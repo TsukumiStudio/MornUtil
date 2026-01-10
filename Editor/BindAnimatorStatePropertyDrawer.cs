@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
 
-namespace MornUtil.Editor
+namespace MornLib
 {
     /// <summary>
     /// BindAnimatorState用のCustomPropertyDrawer

@@ -1,6 +1,6 @@
 ﻿using UnityEngine.EventSystems;
 
-namespace MornUtil
+namespace MornLib
 {
     public static class MornPointEventDataEx
     {

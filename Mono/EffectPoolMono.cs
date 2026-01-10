@@ -2,7 +2,7 @@
 using UniRx.Triggers;
 using UnityEngine;
 
-namespace MornUtil
+namespace MornLib
 {
     public sealed class EffectPoolMono : MonoBehaviour
     {
@@ -15,10 +15,11 @@ namespace MornUtil
             _pool = new MornObjectPool<ParticleSystem>(OnGenerate, OnRent, OnReturn, _initialSize);
         }
 
-        public void Play(Vector3 pos)
+        public ParticleSystem Play(Vector3 pos)
         {
             var effect = _pool.Rent();
             effect.transform.position = pos;
+            return effect;
         }
 
         private ParticleSystem OnGenerate()

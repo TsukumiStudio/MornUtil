@@ -3,7 +3,7 @@ using UniRx.Triggers;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace MornUtil
+namespace MornLib
 {
     [RequireComponent(typeof(Button))]
     public sealed class MornWebOpenURLButton : MonoBehaviour

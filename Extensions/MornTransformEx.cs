@@ -2,7 +2,7 @@
 using System.Text;
 using UnityEngine;
 
-namespace MornUtil
+namespace MornLib
 {
     public static class MornTransformEx
     {

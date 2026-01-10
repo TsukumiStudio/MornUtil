@@ -1,8 +1,7 @@
 ﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
 using UnityEngine;
 
-namespace MornUtil
+namespace MornLib
 {
     public static class MornWebUtil
     {

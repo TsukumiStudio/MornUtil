@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace MornUtil
+namespace MornLib
 {
     public sealed class MornObjectPool<T>
     {

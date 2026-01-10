@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 
-namespace MornUtil
+namespace MornLib
 {
     public static class MornRandom
     {

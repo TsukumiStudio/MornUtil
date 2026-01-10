@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MornUtil
+namespace MornLib
 {
     public static class MornTimeSpan
     {

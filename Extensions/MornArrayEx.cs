@@ -1,7 +1,7 @@
 ﻿using System;
 using Random = UnityEngine.Random;
 
-namespace MornUtil
+namespace MornLib
 {
     public static class MornArrayEx
     {

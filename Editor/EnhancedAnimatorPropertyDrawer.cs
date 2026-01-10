@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace MornUtil.Editor
+namespace MornLib
 {
     /// <summary>
     /// 拡張版Animator用CustomPropertyDrawer

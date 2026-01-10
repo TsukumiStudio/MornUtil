@@ -1,10 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace MornUtil
+namespace MornLib
 {
     [CreateAssetMenu(fileName = nameof(ScrollRectSettings), menuName = "Morn/" + nameof(ScrollRectSettings))]
-    public sealed class ScrollRectSettings : ScriptableObject
+    internal sealed class ScrollRectSettings : ScriptableObject
     {
         [SerializeField] private ScrollRect.MovementType _movementType = ScrollRect.MovementType.Elastic;
         [SerializeField] private float _elasticity = 0.1f;

@@ -1,9 +1,9 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace MornUtil.Editor
+namespace MornLib
 {
-    public static class OpenPath
+    internal static class OpenPath
     {
         [MenuItem("Tools/MornUtil/Open Persistent Data Path")]
         private static void OpenPersistentPath()

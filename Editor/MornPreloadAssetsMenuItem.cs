@@ -1,9 +1,9 @@
 using System.Linq;
 using UnityEditor;
 
-namespace MornUtil
+namespace MornLib
 {
-    public static class MornPreloadAssetsMenuItem
+    internal static class MornPreloadAssetsMenuItem
     {
         [MenuItem("Tools/PreloadAssetsの最適化")]
         private static void OptimizePreloadAsset()

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace MornUtil
+namespace MornLib
 {
     public static class MornVector2Ex
     {

@@ -1,10 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace MornUtil
+namespace MornLib
 {
     [RequireComponent(typeof(ScrollRect))]
-    public sealed class ScrollRectSetter : MonoBehaviour
+    internal sealed class ScrollRectSetter : MonoBehaviour
     {
         [SerializeField] private ScrollRect _scrollRect;
         [SerializeField] private ScrollRectSettings _settings;

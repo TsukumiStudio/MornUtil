@@ -6,7 +6,7 @@ using UnityEditor.AddressableAssets;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace MornUtil
+namespace MornLib
 {
     internal sealed class MornUnusedAssetSearchWindow : EditorWindow
     {

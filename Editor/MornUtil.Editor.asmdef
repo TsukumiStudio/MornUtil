@@ -1,22 +1,22 @@
 {
-    "name": "MornUtil.Editor",
-    "rootNamespace": "MornUtil",
-    "references": [
-        "MornUtil",
-        "Unity.Addressables",
-        "Unity.Addressables.Editor",
-        "Unity.2D.Psdimporter.Editor",
-        "Unity.TextMeshPro"
-    ],
-    "includePlatforms": [
-        "Editor"
-    ],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name": "MornUtil.Editor",
+  "rootNamespace": "MornLib",
+  "references": [
+    "MornUtil",
+    "Unity.Addressables",
+    "Unity.Addressables.Editor",
+    "Unity.2D.Psdimporter.Editor",
+    "Unity.TextMeshPro"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

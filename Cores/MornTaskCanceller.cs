@@ -2,7 +2,7 @@
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-namespace MornUtil
+namespace MornLib
 {
     public class MornTaskCanceller
     {

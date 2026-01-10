@@ -1,12 +1,12 @@
 ﻿using UnityEngine;
 
-namespace MornUtil
+namespace MornLib
 {
     public static class MornComponent
     {
         public static bool TryFindOnlyOneComponent<T>(out T result) where T : MonoBehaviour
         {
-            var objects = Object.FindObjectsOfType<T>();
+            var objects = Object.FindObjectsByType<T>(FindObjectsSortMode.None);
             if (objects.Length == 1)
             {
                 result = objects[0];

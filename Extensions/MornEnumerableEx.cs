@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MornUtil
+namespace MornLib
 {
     public static class MornEnumerableEx
     {

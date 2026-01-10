@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEditor.U2D.PSD;
 using UnityEngine;
 
-namespace MornUtil
+namespace MornLib
 {
     internal sealed class MornPsdSettingsEditorWindow : EditorWindow
     {

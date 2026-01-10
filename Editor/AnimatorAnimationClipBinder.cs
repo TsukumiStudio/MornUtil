@@ -4,12 +4,12 @@ using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
 
-namespace MornUtil.Editor
+namespace MornLib
 {
     /// <summary>
     /// Animator と AnimationClip を結合・分離するEditorWindow
     /// </summary>
-    internal class AnimatorAnimationClipBinder : EditorWindow
+    internal sealed class AnimatorAnimationClipBinder : EditorWindow
     {
         private RuntimeAnimatorController _targetController;
         private AnimationClip _clipToBind;

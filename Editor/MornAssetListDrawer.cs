@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace MornUtil
+namespace MornLib
 {
     internal static class MornAssetListDrawer
     {

@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace MornUtil.Editor
+namespace MornLib
 {
     /// <summary>
     /// MornUtil Editor設定

@@ -1,9 +1,9 @@
 using TMPro;
 using UnityEngine;
 
-namespace MornUtil
+namespace MornLib
 {
-    public sealed class MornVerText : MonoBehaviour
+    internal sealed class MornVerText : MonoBehaviour
     {
         [SerializeField] private TMP_Text _text;
         

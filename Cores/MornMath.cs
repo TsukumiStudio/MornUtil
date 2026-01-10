@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace MornLib.Cores
+namespace MornLib
 {
     public static class MornMath
     {
@@ -36,9 +36,7 @@ namespace MornLib.Cores
             degree -= centerValue;
             degree %= 360;
             if (180 < degree) degree -= 360;
-
             if (degree < -180) degree += 360;
-
             return degree + centerValue;
         }
 

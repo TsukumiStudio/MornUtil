@@ -1,7 +1,7 @@
 using VContainer;
 using VContainer.Unity;
 
-namespace MornUtil
+namespace MornLib
 {
     public class MornLifetimeScope : LifetimeScope
     {

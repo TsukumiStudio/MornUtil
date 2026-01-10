@@ -1,15 +1,14 @@
-using MornEditor;
 using UnityEngine;
 
-namespace MornUtil
+namespace MornLib
 {
-    public sealed class MornSimpleSpriteAnimation : MonoBehaviour
+    internal sealed class MornSimpleSpriteAnimation : MonoBehaviour
     {
         [SerializeField] private SpriteRenderer _renderer;
         [SerializeField] private Sprite[] _sprites;
-        [SerializeField] private bool _isLoop = true;
-        [SerializeField, ShowIf(nameof(_isLoop))] private bool _isPingPong;
         [SerializeField] private float _duration = 0.2f;
+        [SerializeField] private bool _isLoop = true;
+        [SerializeField] private bool _isPingPong;
         private int _nextIndex;
         private float _nextChangeTime;
 

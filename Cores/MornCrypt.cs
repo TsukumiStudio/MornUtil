@@ -3,9 +3,9 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace MornUtil
+namespace MornLib
 {
-    public class MornCrypt
+    public static class MornCrypt
     {
         /// <summary>
         ///     暗号化
@@ -18,8 +18,12 @@ namespace MornUtil
         {
             using var myRijndael = new RijndaelManaged
             {
-                BlockSize = 128, KeySize = 256, Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7,
-                IV = Encoding.UTF8.GetBytes(iv), Key = Encoding.UTF8.GetBytes(key)
+                BlockSize = 128,
+                KeySize = 256,
+                Mode = CipherMode.CBC,
+                Padding = PaddingMode.PKCS7,
+                IV = Encoding.UTF8.GetBytes(iv),
+                Key = Encoding.UTF8.GetBytes(key)
             };
             var encryptor = myRijndael.CreateEncryptor(myRijndael.Key, myRijndael.IV);
             using var mStream = new MemoryStream();
@@ -32,7 +36,6 @@ namespace MornUtil
             var encrypted = mStream.ToArray();
             return Convert.ToBase64String(encrypted);
         }
-        
 
         /// <summary>
         ///     復号
@@ -45,8 +48,12 @@ namespace MornUtil
         {
             using var rijndael = new RijndaelManaged
             {
-                BlockSize = 128, KeySize = 256, Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7,
-                IV = Encoding.UTF8.GetBytes(iv), Key = Encoding.UTF8.GetBytes(key)
+                BlockSize = 128,
+                KeySize = 256,
+                Mode = CipherMode.CBC,
+                Padding = PaddingMode.PKCS7,
+                IV = Encoding.UTF8.GetBytes(iv),
+                Key = Encoding.UTF8.GetBytes(key)
             };
             var decryptor = rijndael.CreateDecryptor(rijndael.Key, rijndael.IV);
             using var mStream = new MemoryStream(Convert.FromBase64String(cipher));
@@ -54,7 +61,7 @@ namespace MornUtil
             using var sr = new StreamReader(ctStream);
             return sr.ReadLine();
         }
-        
+
         /// <summary>
         ///     バイト配列を暗号化
         /// </summary>
@@ -66,8 +73,12 @@ namespace MornUtil
         {
             using var rijndael = new RijndaelManaged
             {
-                BlockSize = 128, KeySize = 256, Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7,
-                IV = Encoding.UTF8.GetBytes(iv), Key = Encoding.UTF8.GetBytes(key)
+                BlockSize = 128,
+                KeySize = 256,
+                Mode = CipherMode.CBC,
+                Padding = PaddingMode.PKCS7,
+                IV = Encoding.UTF8.GetBytes(iv),
+                Key = Encoding.UTF8.GetBytes(key)
             };
             var encryptor = rijndael.CreateEncryptor(rijndael.Key, rijndael.IV);
             using var mStream = new MemoryStream();
@@ -76,7 +87,7 @@ namespace MornUtil
             ctStream.FlushFinalBlock();
             return mStream.ToArray();
         }
-        
+
         /// <summary>
         ///     バイト配列を復号
         /// </summary>
@@ -88,8 +99,12 @@ namespace MornUtil
         {
             using var rijndael = new RijndaelManaged
             {
-                BlockSize = 128, KeySize = 256, Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7,
-                IV = Encoding.UTF8.GetBytes(iv), Key = Encoding.UTF8.GetBytes(key)
+                BlockSize = 128,
+                KeySize = 256,
+                Mode = CipherMode.CBC,
+                Padding = PaddingMode.PKCS7,
+                IV = Encoding.UTF8.GetBytes(iv),
+                Key = Encoding.UTF8.GetBytes(key)
             };
             var decryptor = rijndael.CreateDecryptor(rijndael.Key, rijndael.IV);
             using var mStream = new MemoryStream(cipher);
