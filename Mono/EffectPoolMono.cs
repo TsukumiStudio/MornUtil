@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MornLib
 {
-    public sealed class EffectPoolMono : MonoBehaviour
+    public class EffectPoolMono : MonoBehaviour
     {
         [SerializeField] private ParticleSystem _effectPrefab;
         [SerializeField] private int _initialSize = 3;
