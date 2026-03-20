@@ -30,6 +30,7 @@ namespace MornLib
         private float _updateInterval = 0.1f;
         private float _lastUpdateTime;
         private GUIStyle _labelStyle;
+        private Texture2D _labelBgTexture;
 
         // --- UGUI ---
         private bool _uguiEnabled;
@@ -489,6 +490,17 @@ namespace MornLib
             Handles.color = saved;
         }
 
+        private Texture2D GetLabelBgTexture()
+        {
+            if (_labelBgTexture == null)
+            {
+                _labelBgTexture = new Texture2D(1, 1);
+                _labelBgTexture.SetPixel(0, 0, new Color(0f, 0f, 0f, 0.7f));
+                _labelBgTexture.Apply();
+            }
+            return _labelBgTexture;
+        }
+
         private GUIStyle GetLabelStyle()
         {
             if (_labelStyle == null)
@@ -497,7 +509,12 @@ namespace MornLib
                 {
                     fontSize = _labelFontSize,
                     alignment = TextAnchor.MiddleCenter,
-                    normal = { textColor = _labelColor },
+                    padding = new RectOffset(4, 4, 2, 2),
+                    normal =
+                    {
+                        textColor = _labelColor,
+                        background = GetLabelBgTexture(),
+                    },
                 };
             }
             return _labelStyle;
