@@ -138,10 +138,7 @@ namespace MornLib
             EditorGUILayout.LabelField("共通設定", EditorStyles.boldLabel);
             _showFill = EditorGUILayout.Toggle("塗りつぶし表示", _showFill);
             _showBorder = EditorGUILayout.Toggle("枠線表示", _showBorder);
-            if (_showBorder)
-            {
-                _borderWidth = EditorGUILayout.Slider("枠線の太さ", _borderWidth, 1f, 10f);
-            }
+            _borderWidth = EditorGUILayout.Slider("枠線の太さ", _borderWidth, 1f, 10f);
             _labelFontSize = EditorGUILayout.IntSlider("文字サイズ", _labelFontSize, 6, 24);
             _updateInterval = EditorGUILayout.Slider("更新間隔", _updateInterval, 0.01f, 1f);
 
@@ -152,11 +149,6 @@ namespace MornLib
                 EditorGUILayout.LabelField($"UGUI: {_cachedGraphics.Count}");
             if (_collider2DEnabled)
                 EditorGUILayout.LabelField($"Collider2D: {_cachedColliders.Count}");
-
-            if (AnyEnabled)
-            {
-                EditorGUILayout.LabelField($"{_updateInterval:F2}秒ごとに自動更新中", EditorStyles.helpBox);
-            }
 
             if (GUILayout.Button("強制更新"))
             {
@@ -443,7 +435,7 @@ namespace MornLib
             }
 
             var worldPos = col.transform.TransformPoint(col.offset);
-            var labelText = col.isTrigger ? $"{col.GetType().Name} (T)" : col.GetType().Name;
+            var labelText = col.isTrigger ? $"{col.gameObject.name} (T)" : col.gameObject.name;
             Handles.Label(worldPos, labelText, GetLabelStyle());
         }
 
