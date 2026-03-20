@@ -239,15 +239,13 @@ namespace MornLib
             }
 
             EditorGUILayout.Space();
-            _updateInterval = EditorGUILayout.Slider("更新間隔", _updateInterval, 0.01f, 1f);
-
-            EditorGUILayout.Space();
 
             // Status
             EditorGUILayout.LabelField($"UGUI: {(_uguiEnabled ? _cachedGraphics.Count.ToString() : "OFF")}");
             EditorGUILayout.LabelField($"Collider2D: {(_collider2DEnabled ? _cachedColliders2D.Count.ToString() : "OFF")}");
             EditorGUILayout.LabelField($"Collider3D: {(_collider3DEnabled ? _cachedColliders3D.Count.ToString() : "OFF")}");
 
+            _updateInterval = EditorGUILayout.Slider("更新間隔", _updateInterval, 0.01f, 1f);
             if (GUILayout.Button("強制更新"))
             {
                 UpdateCache();
