@@ -9,6 +9,8 @@ namespace MornLib
 {
     public sealed class RaycastTargetVisualizerWindow : EditorWindow
     {
+        private const string PrefPrefix = "MornRaycastViz_";
+
         private static RaycastTargetVisualizerWindow _instance;
         private bool _isVisualizationEnabled;
         private Color _visualizationColor = new(1f, 0f, 0f, 0.3f);
@@ -17,9 +19,11 @@ namespace MornLib
         private bool _showBorder = true;
         private bool _showFill = true;
         private bool _checkCanvasGroup = true;
+        private int _labelFontSize = 10;
         private readonly List<Graphic> cachedGraphics = new();
         private float _updateInterval = 0.1f;
         private float _lastUpdateTime;
+        private GUIStyle _labelStyle;
 
         [MenuItem("Tools/Raycastターゲット可視化")]
         public static void ShowWindow()
@@ -31,6 +35,7 @@ namespace MornLib
         private void OnEnable()
         {
             _instance = this;
+            LoadPrefs();
             SceneView.duringSceneGui += OnSceneGUI;
             EditorApplication.update += OnEditorUpdate;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
@@ -38,10 +43,40 @@ namespace MornLib
 
         private void OnDisable()
         {
+            SavePrefs();
             SceneView.duringSceneGui -= OnSceneGUI;
             EditorApplication.update -= OnEditorUpdate;
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             _instance = null;
+        }
+
+        private void LoadPrefs()
+        {
+            _isVisualizationEnabled = EditorPrefs.GetBool(PrefPrefix + "Enabled", false);
+            _showFill = EditorPrefs.GetBool(PrefPrefix + "ShowFill", true);
+            _showBorder = EditorPrefs.GetBool(PrefPrefix + "ShowBorder", true);
+            _checkCanvasGroup = EditorPrefs.GetBool(PrefPrefix + "CheckCanvasGroup", true);
+            _borderWidth = EditorPrefs.GetFloat(PrefPrefix + "BorderWidth", 2f);
+            _updateInterval = EditorPrefs.GetFloat(PrefPrefix + "UpdateInterval", 0.1f);
+            _labelFontSize = EditorPrefs.GetInt(PrefPrefix + "LabelFontSize", 10);
+
+            if (ColorUtility.TryParseHtmlString(EditorPrefs.GetString(PrefPrefix + "FillColor", ""), out var fc))
+                _visualizationColor = fc;
+            if (ColorUtility.TryParseHtmlString(EditorPrefs.GetString(PrefPrefix + "BorderColor", ""), out var bc))
+                _borderColor = bc;
+        }
+
+        private void SavePrefs()
+        {
+            EditorPrefs.SetBool(PrefPrefix + "Enabled", _isVisualizationEnabled);
+            EditorPrefs.SetBool(PrefPrefix + "ShowFill", _showFill);
+            EditorPrefs.SetBool(PrefPrefix + "ShowBorder", _showBorder);
+            EditorPrefs.SetBool(PrefPrefix + "CheckCanvasGroup", _checkCanvasGroup);
+            EditorPrefs.SetFloat(PrefPrefix + "BorderWidth", _borderWidth);
+            EditorPrefs.SetFloat(PrefPrefix + "UpdateInterval", _updateInterval);
+            EditorPrefs.SetInt(PrefPrefix + "LabelFontSize", _labelFontSize);
+            EditorPrefs.SetString(PrefPrefix + "FillColor", "#" + ColorUtility.ToHtmlStringRGBA(_visualizationColor));
+            EditorPrefs.SetString(PrefPrefix + "BorderColor", "#" + ColorUtility.ToHtmlStringRGBA(_borderColor));
         }
 
         private void OnGUI()
@@ -54,17 +89,19 @@ namespace MornLib
             {
                 if (_isVisualizationEnabled)
                 {
-                    // 有効化時は即座にキャッシュを更新
                     _lastUpdateTime = 0f;
                     UpdateCachedGraphics();
                 }
 
+                SavePrefs();
                 SceneView.RepaintAll();
             }
 
             EditorGUILayout.Space();
             using (new EditorGUI.DisabledGroupScope(!_isVisualizationEnabled))
             {
+                EditorGUI.BeginChangeCheck();
+
                 EditorGUILayout.LabelField("表示設定", EditorStyles.boldLabel);
                 _showFill = EditorGUILayout.Toggle("塗りつぶし表示", _showFill);
                 if (_showFill)
@@ -79,15 +116,15 @@ namespace MornLib
                     _borderWidth = EditorGUILayout.Slider("枠線の太さ", _borderWidth, 1f, 10f);
                 }
 
+                _labelFontSize = EditorGUILayout.IntSlider("文字サイズ", _labelFontSize, 6, 24);
+
                 EditorGUILayout.Space();
 
-                // CanvasGroupチェックオプション
-                EditorGUI.BeginChangeCheck();
+                var prevCheckCanvasGroup = _checkCanvasGroup;
                 _checkCanvasGroup = EditorGUILayout.Toggle("CanvasGroupを考慮", _checkCanvasGroup);
-                if (EditorGUI.EndChangeCheck())
+                if (_checkCanvasGroup != prevCheckCanvasGroup)
                 {
-                    // 即座に更新を強制
-                    _lastUpdateTime = 0f; // 次のOnEditorUpdateで確実に更新される
+                    _lastUpdateTime = 0f;
                     UpdateCachedGraphics();
                     SceneView.RepaintAll();
                 }
@@ -97,10 +134,17 @@ namespace MornLib
                     MessageType.Info);
                 EditorGUILayout.Space();
                 _updateInterval = EditorGUILayout.Slider("更新間隔", _updateInterval, 0.01f, 1f);
+
+                if (EditorGUI.EndChangeCheck())
+                {
+                    _labelStyle = null;
+                    SavePrefs();
+                    SceneView.RepaintAll();
+                }
+
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField($"キャッシュ済みGraphic数: {cachedGraphics.Count}");
 
-                // 自動更新の状態を表示
                 if (_isVisualizationEnabled)
                 {
                     EditorGUILayout.LabelField($"{_updateInterval:F2}秒ごとに自動更新中", EditorStyles.helpBox);
@@ -124,17 +168,12 @@ namespace MornLib
 
         private void OnPlayModeStateChanged(PlayModeStateChange state)
         {
-            // PlayModeが変更されたときにForceUpdateを実行
             if (_isVisualizationEnabled)
             {
-                // PlayMode開始、終了、一時停止のいずれの場合も更新
                 UpdateCachedGraphics();
                 _lastUpdateTime = Time.realtimeSinceStartup;
                 SceneView.RepaintAll();
                 Repaint();
-
-                // デバッグログ（必要に応じてコメントアウト可能）
-                Debug.Log($"RaycastTargetVisualizer: PlayModeが {state} に変更されました。グラフィックスキャッシュを強制更新しました。");
             }
         }
 
@@ -142,39 +181,26 @@ namespace MornLib
         {
             if (!_isVisualizationEnabled) return;
 
-            // Interval毎に自動更新（Playモード中もEditモード中も）
             if (Time.realtimeSinceStartup - _lastUpdateTime > _updateInterval)
             {
                 UpdateCachedGraphics();
                 _lastUpdateTime = Time.realtimeSinceStartup;
                 SceneView.RepaintAll();
-                Repaint(); // ウィンドウ自体も更新
+                Repaint();
             }
         }
 
         private bool IsGraphicRaycastable(Graphic graphic)
         {
-            // Graphic自体のraycastTargetチェック
             if (!graphic.raycastTarget) return false;
-
-            // GameObjectのアクティブチェック
             if (!graphic.gameObject.activeInHierarchy) return false;
-
-            // CanvasGroupチェックがOFFの場合はここで終了
             if (!_checkCanvasGroup) return true;
 
-            // 親階層のCanvasGroup全てをチェック（自分自身も含む）
             CanvasGroup[] canvasGroups = graphic.GetComponentsInParent<CanvasGroup>(true);
             foreach (var canvasGroup in canvasGroups)
             {
-                // blocksRaycastsがfalseなら除外（レイキャストを透過する）
                 if (!canvasGroup.blocksRaycasts) return false;
-
-                // ignoreParentGroupsがtrueなら、それより上の階層は無視
-                if (canvasGroup.ignoreParentGroups)
-                {
-                    break;
-                }
+                if (canvasGroup.ignoreParentGroups) break;
             }
 
             return true;
@@ -184,7 +210,6 @@ namespace MornLib
         {
             cachedGraphics.Clear();
 
-            // Prefab Editing Mode中ならPrefab Stageから取得
             var prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
             if (prefabStage != null)
             {
@@ -192,7 +217,6 @@ namespace MornLib
                 return;
             }
 
-            // 全ロード済みシーンのルートGameObjectから再帰的にGraphicを探す
             for (var i = 0; i < SceneManager.sceneCount; i++)
             {
                 var scene = SceneManager.GetSceneAt(i);
@@ -219,7 +243,6 @@ namespace MornLib
         {
             if (!_isVisualizationEnabled) return;
 
-            // Cache update is now handled by OnEditorUpdate at regular intervals
             Handles.BeginGUI();
             foreach (var graphic in cachedGraphics)
             {
@@ -230,36 +253,44 @@ namespace MornLib
             Handles.EndGUI();
         }
 
+        private GUIStyle GetLabelStyle()
+        {
+            if (_labelStyle == null)
+            {
+                _labelStyle = new GUIStyle(EditorStyles.whiteMiniLabel)
+                {
+                    fontSize = _labelFontSize,
+                    alignment = TextAnchor.MiddleCenter,
+                };
+            }
+            return _labelStyle;
+        }
+
         private void DrawGraphicVisualization(Graphic graphic)
         {
             RectTransform rectTransform = graphic.rectTransform;
             Canvas canvas = graphic.canvas;
             if (rectTransform == null || canvas == null) return;
 
-            // Get world corners of the RectTransform
             Vector3[] worldCorners = new Vector3[4];
             rectTransform.GetWorldCorners(worldCorners);
 
-            // Convert world positions to GUI positions
             Vector3[] guiCorners = new Vector3[4];
             for (int i = 0; i < 4; i++)
             {
                 guiCorners[i] = HandleUtility.WorldToGUIPoint(worldCorners[i]);
             }
 
-            // Draw fill
             if (_showFill)
             {
                 Handles.DrawSolidRectangleWithOutline(guiCorners, _visualizationColor, Color.clear);
             }
 
-            // Draw border
             if (_showBorder)
             {
                 Color oldColor = Handles.color;
                 Handles.color = _borderColor;
 
-                // Draw thicker lines by drawing multiple times with slight offset
                 for (float offset = -_borderWidth / 2; offset <= _borderWidth / 2; offset += 0.5f)
                 {
                     Vector3[] offsetCorners = new Vector3[4];
@@ -268,7 +299,6 @@ namespace MornLib
                         offsetCorners[i] = guiCorners[i] + Vector3.one * offset;
                     }
 
-                    // Draw rectangle outline
                     for (int i = 0; i < 4; i++)
                     {
                         int nextIndex = (i + 1) % 4;
@@ -279,12 +309,14 @@ namespace MornLib
                 Handles.color = oldColor;
             }
 
-            // Draw label with component name
+            var style = GetLabelStyle();
             Vector2 center = (guiCorners[0] + guiCorners[2]) / 2f;
+            var labelWidth = _labelFontSize * 10f;
+            var labelHeight = _labelFontSize + 4f;
             GUI.Label(
-                new Rect(center.x - 50, center.y - 10, 100, 20),
+                new Rect(center.x - labelWidth / 2f, center.y - labelHeight / 2f, labelWidth, labelHeight),
                 graphic.GetType().Name,
-                EditorStyles.whiteMiniLabel);
+                style);
         }
     }
 }
