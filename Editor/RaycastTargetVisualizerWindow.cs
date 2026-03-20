@@ -469,20 +469,24 @@ namespace MornLib
 
         private void DrawCollider2DOverlay()
         {
+            var saved = Handles.color;
             foreach (var col in _cachedColliders2D)
             {
                 if (col == null || !col.enabled || !col.gameObject.activeInHierarchy) continue;
                 DrawCollider2DVisualization(col);
             }
+            Handles.color = saved;
         }
 
         private void DrawCollider3DOverlay()
         {
+            var saved = Handles.color;
             foreach (var col in _cachedColliders3D)
             {
                 if (col == null || !col.enabled || !col.gameObject.activeInHierarchy) continue;
                 DrawCollider3DVisualization(col);
             }
+            Handles.color = saved;
         }
 
         private GUIStyle GetLabelStyle()
