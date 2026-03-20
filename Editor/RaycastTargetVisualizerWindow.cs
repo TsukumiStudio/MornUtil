@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -183,6 +184,14 @@ namespace MornLib
         {
             cachedGraphics.Clear();
 
+            // Prefab Editing Mode中ならPrefab Stageから取得
+            var prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+            if (prefabStage != null)
+            {
+                CollectGraphics(prefabStage.prefabContentsRoot);
+                return;
+            }
+
             // 全ロード済みシーンのルートGameObjectから再帰的にGraphicを探す
             for (var i = 0; i < SceneManager.sceneCount; i++)
             {
@@ -190,13 +199,18 @@ namespace MornLib
                 if (!scene.isLoaded) continue;
                 foreach (var root in scene.GetRootGameObjects())
                 {
-                    foreach (var graphic in root.GetComponentsInChildren<Graphic>(true))
-                    {
-                        if (graphic != null && IsGraphicRaycastable(graphic))
-                        {
-                            cachedGraphics.Add(graphic);
-                        }
-                    }
+                    CollectGraphics(root);
+                }
+            }
+        }
+
+        private void CollectGraphics(GameObject root)
+        {
+            foreach (var graphic in root.GetComponentsInChildren<Graphic>(true))
+            {
+                if (graphic != null && IsGraphicRaycastable(graphic))
+                {
+                    cachedGraphics.Add(graphic);
                 }
             }
         }
