@@ -582,8 +582,8 @@ namespace MornLib
 
             switch (col)
             {
-                case BoxCollider box: DrawBoxCollider3D(box, border); break;
-                case SphereCollider sphere: DrawSphereCollider3D(sphere, border); break;
+                case BoxCollider box: DrawBoxCollider3D(box, fill, border); break;
+                case SphereCollider sphere: DrawSphereCollider3D(sphere, fill, border); break;
                 case CapsuleCollider capsule: DrawCapsuleCollider3D(capsule, border); break;
                 case MeshCollider mesh: DrawMeshCollider3D(mesh, border); break;
             }
@@ -593,56 +593,67 @@ namespace MornLib
             Handles.Label(worldPos, labelText, GetLabelStyle());
         }
 
-        private void DrawBoxCollider3D(BoxCollider box, Color border)
+        private void DrawBoxCollider3D(BoxCollider box, Color fill, Color border)
         {
-            if (!_showBorder) return;
             var t = box.transform;
             var half = box.size / 2f;
             var offsets = new[]
             {
-                new Vector3(-half.x, -half.y, -half.z),
-                new Vector3(-half.x, -half.y, half.z),
-                new Vector3(-half.x, half.y, -half.z),
-                new Vector3(-half.x, half.y, half.z),
-                new Vector3(half.x, -half.y, -half.z),
-                new Vector3(half.x, -half.y, half.z),
-                new Vector3(half.x, half.y, -half.z),
-                new Vector3(half.x, half.y, half.z),
+                new Vector3(-half.x, -half.y, -half.z), // 0
+                new Vector3(-half.x, -half.y, half.z),  // 1
+                new Vector3(-half.x, half.y, -half.z),  // 2
+                new Vector3(-half.x, half.y, half.z),   // 3
+                new Vector3(half.x, -half.y, -half.z),  // 4
+                new Vector3(half.x, -half.y, half.z),   // 5
+                new Vector3(half.x, half.y, -half.z),   // 6
+                new Vector3(half.x, half.y, half.z),    // 7
             };
-            var verts = new Vector3[8];
+            var v = new Vector3[8];
             for (var i = 0; i < 8; i++)
-                verts[i] = t.TransformPoint(box.center + offsets[i]);
+                v[i] = t.TransformPoint(box.center + offsets[i]);
 
-            Handles.color = border;
-            // bottom
-            Handles.DrawLine(verts[0], verts[1], _borderWidth);
-            Handles.DrawLine(verts[1], verts[5], _borderWidth);
-            Handles.DrawLine(verts[5], verts[4], _borderWidth);
-            Handles.DrawLine(verts[4], verts[0], _borderWidth);
-            // top
-            Handles.DrawLine(verts[2], verts[3], _borderWidth);
-            Handles.DrawLine(verts[3], verts[7], _borderWidth);
-            Handles.DrawLine(verts[7], verts[6], _borderWidth);
-            Handles.DrawLine(verts[6], verts[2], _borderWidth);
-            // pillars
-            Handles.DrawLine(verts[0], verts[2], _borderWidth);
-            Handles.DrawLine(verts[1], verts[3], _borderWidth);
-            Handles.DrawLine(verts[4], verts[6], _borderWidth);
-            Handles.DrawLine(verts[5], verts[7], _borderWidth);
+            if (_showFill)
+            {
+                Handles.DrawSolidRectangleWithOutline(new[] { v[0], v[1], v[5], v[4] }, fill, Color.clear); // bottom
+                Handles.DrawSolidRectangleWithOutline(new[] { v[2], v[3], v[7], v[6] }, fill, Color.clear); // top
+                Handles.DrawSolidRectangleWithOutline(new[] { v[0], v[1], v[3], v[2] }, fill, Color.clear); // left
+                Handles.DrawSolidRectangleWithOutline(new[] { v[4], v[5], v[7], v[6] }, fill, Color.clear); // right
+                Handles.DrawSolidRectangleWithOutline(new[] { v[0], v[4], v[6], v[2] }, fill, Color.clear); // front
+                Handles.DrawSolidRectangleWithOutline(new[] { v[1], v[5], v[7], v[3] }, fill, Color.clear); // back
+            }
+            if (_showBorder)
+            {
+                Handles.color = border;
+                Handles.DrawLine(v[0], v[1], _borderWidth); Handles.DrawLine(v[1], v[5], _borderWidth);
+                Handles.DrawLine(v[5], v[4], _borderWidth); Handles.DrawLine(v[4], v[0], _borderWidth);
+                Handles.DrawLine(v[2], v[3], _borderWidth); Handles.DrawLine(v[3], v[7], _borderWidth);
+                Handles.DrawLine(v[7], v[6], _borderWidth); Handles.DrawLine(v[6], v[2], _borderWidth);
+                Handles.DrawLine(v[0], v[2], _borderWidth); Handles.DrawLine(v[1], v[3], _borderWidth);
+                Handles.DrawLine(v[4], v[6], _borderWidth); Handles.DrawLine(v[5], v[7], _borderWidth);
+            }
         }
 
-        private void DrawSphereCollider3D(SphereCollider sphere, Color border)
+        private void DrawSphereCollider3D(SphereCollider sphere, Color fill, Color border)
         {
-            if (!_showBorder) return;
             var t = sphere.transform;
             var center = t.TransformPoint(sphere.center);
             var scale = Mathf.Max(Mathf.Abs(t.lossyScale.x), Mathf.Abs(t.lossyScale.y), Mathf.Abs(t.lossyScale.z));
             var radius = sphere.radius * scale;
 
-            Handles.color = border;
-            Handles.DrawWireDisc(center, Vector3.up, radius, _borderWidth);
-            Handles.DrawWireDisc(center, Vector3.right, radius, _borderWidth);
-            Handles.DrawWireDisc(center, Vector3.forward, radius, _borderWidth);
+            if (_showFill)
+            {
+                Handles.color = fill;
+                Handles.DrawSolidDisc(center, Vector3.up, radius);
+                Handles.DrawSolidDisc(center, Vector3.right, radius);
+                Handles.DrawSolidDisc(center, Vector3.forward, radius);
+            }
+            if (_showBorder)
+            {
+                Handles.color = border;
+                Handles.DrawWireDisc(center, Vector3.up, radius, _borderWidth);
+                Handles.DrawWireDisc(center, Vector3.right, radius, _borderWidth);
+                Handles.DrawWireDisc(center, Vector3.forward, radius, _borderWidth);
+            }
         }
 
         private void DrawCapsuleCollider3D(CapsuleCollider capsule, Color border)
