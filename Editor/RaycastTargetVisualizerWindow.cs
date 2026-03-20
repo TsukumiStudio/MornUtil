@@ -774,58 +774,20 @@ namespace MornLib
             }
             else
             {
-                var sideDir = side.normalized;
-                var upDir = up.normalized;
-                const int halfSegments = 16;
-
                 if (_showFill)
                 {
                     Handles.color = fill;
-                    // Body rectangle
+                    Handles.DrawSolidDisc(topCenter, camNormal, r);
+                    Handles.DrawSolidDisc(bottomCenter, camNormal, r);
                     Handles.DrawAAConvexPolygon(topCenter + side, topCenter - side, bottomCenter - side, bottomCenter + side);
-                    // Top half-circle (fan triangles)
-                    for (var i = 0; i < halfSegments; i++)
-                    {
-                        var a0 = Mathf.PI * i / halfSegments;
-                        var a1 = Mathf.PI * (i + 1) / halfSegments;
-                        var p0 = topCenter + (sideDir * Mathf.Cos(a0) + upDir * Mathf.Sin(a0)) * r;
-                        var p1 = topCenter + (sideDir * Mathf.Cos(a1) + upDir * Mathf.Sin(a1)) * r;
-                        Handles.DrawAAConvexPolygon(topCenter, p0, p1);
-                    }
-                    // Bottom half-circle
-                    for (var i = 0; i < halfSegments; i++)
-                    {
-                        var a0 = Mathf.PI + Mathf.PI * i / halfSegments;
-                        var a1 = Mathf.PI + Mathf.PI * (i + 1) / halfSegments;
-                        var p0 = bottomCenter + (sideDir * Mathf.Cos(a0) + upDir * Mathf.Sin(a0)) * r;
-                        var p1 = bottomCenter + (sideDir * Mathf.Cos(a1) + upDir * Mathf.Sin(a1)) * r;
-                        Handles.DrawAAConvexPolygon(bottomCenter, p0, p1);
-                    }
                 }
                 if (_showBorder)
                 {
                     Handles.color = border;
-                    // Side lines
+                    Handles.DrawWireDisc(topCenter, camNormal, r, _borderWidth);
+                    Handles.DrawWireDisc(bottomCenter, camNormal, r, _borderWidth);
                     Handles.DrawLine(topCenter + side, bottomCenter + side, _borderWidth);
                     Handles.DrawLine(topCenter - side, bottomCenter - side, _borderWidth);
-                    // Top half-arc
-                    var prev = topCenter + side;
-                    for (var i = 1; i <= halfSegments; i++)
-                    {
-                        var angle = Mathf.PI * i / halfSegments;
-                        var next = topCenter + (sideDir * Mathf.Cos(angle) + upDir * Mathf.Sin(angle)) * r;
-                        Handles.DrawLine(prev, next, _borderWidth);
-                        prev = next;
-                    }
-                    // Bottom half-arc
-                    prev = bottomCenter - side;
-                    for (var i = 1; i <= halfSegments; i++)
-                    {
-                        var angle = Mathf.PI + Mathf.PI * i / halfSegments;
-                        var next = bottomCenter + (sideDir * Mathf.Cos(angle) + upDir * Mathf.Sin(angle)) * r;
-                        Handles.DrawLine(prev, next, _borderWidth);
-                        prev = next;
-                    }
                 }
             }
         }
