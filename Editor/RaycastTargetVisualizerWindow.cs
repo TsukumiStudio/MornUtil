@@ -32,6 +32,7 @@ namespace MornLib
         private Color _labelBgColor = new(0f, 0f, 0f, 0.7f);
         private float _updateInterval = 0.1f;
         private float _lastUpdateTime;
+        private readonly List<(Vector3 worldPos, string text)> _pendingLabels = new();
         private GUIStyle _labelStyle;
         private Texture2D _labelBgTexture;
 
@@ -475,9 +476,30 @@ namespace MornLib
 
         private void OnSceneGUI(SceneView sceneView)
         {
+            _pendingLabels.Clear();
             if (_uguiEnabled) DrawUGUIOverlay();
             if (_collider2DEnabled) DrawCollider2DOverlay();
             if (_collider3DEnabled) DrawCollider3DOverlay();
+            DrawPendingLabels();
+        }
+
+        private void DrawPendingLabels()
+        {
+            if (!_showLabel || _pendingLabels.Count == 0) return;
+
+            var camPos = GetSceneViewCameraPosition();
+            _pendingLabels.Sort((a, b) =>
+            {
+                var da = (a.worldPos - camPos).sqrMagnitude;
+                var db = (b.worldPos - camPos).sqrMagnitude;
+                return db.CompareTo(da); // far first
+            });
+
+            var style = GetLabelStyle();
+            foreach (var (worldPos, text) in _pendingLabels)
+            {
+                Handles.Label(worldPos, text, style);
+            }
         }
 
         private void DrawUGUIOverlay()
@@ -599,7 +621,7 @@ namespace MornLib
             {
                 var worldPos = col.transform.TransformPoint(col.offset);
                 var labelText = col.isTrigger ? $"{col.gameObject.name} (T)" : col.gameObject.name;
-                Handles.Label(worldPos, labelText, GetLabelStyle());
+                _pendingLabels.Add((worldPos, labelText));
             }
         }
 
@@ -710,7 +732,7 @@ namespace MornLib
             {
                 var worldPos = col.bounds.center;
                 var labelText = col.isTrigger ? $"{col.gameObject.name} (T)" : col.gameObject.name;
-                Handles.Label(worldPos, labelText, GetLabelStyle());
+                _pendingLabels.Add((worldPos, labelText));
             }
         }
 
