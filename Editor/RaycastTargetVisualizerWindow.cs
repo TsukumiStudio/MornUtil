@@ -759,6 +759,13 @@ namespace MornLib
                 Handles.color = fill;
                 Handles.DrawSolidDisc(topCenter, camNormal, r);
                 Handles.DrawSolidDisc(bottomCenter, camNormal, r);
+                if (halfH > 0f)
+                {
+                    // Fill body between the two discs
+                    Handles.DrawSolidRectangleWithOutline(
+                        new[] { topCenter + side, topCenter - side, bottomCenter - side, bottomCenter + side },
+                        fill, Color.clear);
+                }
             }
             if (_showBorder)
             {
