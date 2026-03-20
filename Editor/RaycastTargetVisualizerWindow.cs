@@ -134,7 +134,7 @@ namespace MornLib
 
             EditorGUI.BeginChangeCheck();
 
-            // Common settings (top)
+            // Common settings
             EditorGUILayout.LabelField("共通設定", EditorStyles.boldLabel);
             _showFill = EditorGUILayout.Toggle("塗りつぶし表示", _showFill);
             _showBorder = EditorGUILayout.Toggle("枠線表示", _showBorder);
@@ -144,6 +144,25 @@ namespace MornLib
             }
             _labelFontSize = EditorGUILayout.IntSlider("文字サイズ", _labelFontSize, 6, 24);
             _updateInterval = EditorGUILayout.Slider("更新間隔", _updateInterval, 0.01f, 1f);
+
+            EditorGUILayout.Space();
+
+            // Status
+            if (_uguiEnabled)
+                EditorGUILayout.LabelField($"UGUI: {_cachedGraphics.Count}");
+            if (_collider2DEnabled)
+                EditorGUILayout.LabelField($"Collider2D: {_cachedColliders.Count}");
+
+            if (AnyEnabled)
+            {
+                EditorGUILayout.LabelField($"{_updateInterval:F2}秒ごとに自動更新中", EditorStyles.helpBox);
+            }
+
+            if (GUILayout.Button("強制更新"))
+            {
+                UpdateCache();
+                SceneView.RepaintAll();
+            }
 
             EditorGUILayout.Space();
 
@@ -180,25 +199,6 @@ namespace MornLib
                 _lastUpdateTime = 0f;
                 UpdateCache();
                 SavePrefs();
-                SceneView.RepaintAll();
-            }
-
-            EditorGUILayout.Space();
-
-            // Status
-            if (_uguiEnabled)
-                EditorGUILayout.LabelField($"UGUI: {_cachedGraphics.Count}");
-            if (_collider2DEnabled)
-                EditorGUILayout.LabelField($"Collider2D: {_cachedColliders.Count}");
-
-            if (AnyEnabled)
-            {
-                EditorGUILayout.LabelField($"{_updateInterval:F2}秒ごとに自動更新中", EditorStyles.helpBox);
-            }
-
-            if (GUILayout.Button("強制更新"))
-            {
-                UpdateCache();
                 SceneView.RepaintAll();
             }
         }
