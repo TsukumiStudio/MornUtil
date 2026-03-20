@@ -754,28 +754,68 @@ namespace MornLib
             // Side lines (perpendicular to both up and camera)
             var side = Vector3.Cross(up, camNormal).normalized * r;
 
-            if (_showFill)
+            if (halfH <= 0f)
             {
-                Handles.color = fill;
-                Handles.DrawSolidDisc(topCenter, camNormal, r);
-                Handles.DrawSolidDisc(bottomCenter, camNormal, r);
-                if (halfH > 0f)
+                // Just a sphere
+                if (_showFill) { Handles.color = fill; Handles.DrawSolidDisc(center, camNormal, r); }
+                if (_showBorder) { Handles.color = border; Handles.DrawWireDisc(center, camNormal, r, _borderWidth); }
+            }
+            else
+            {
+                var sideDir = side.normalized;
+                var upDir = up.normalized;
+                const int halfSegments = 16;
+
+                if (_showFill)
                 {
-                    // Fill body between the two discs
+                    Handles.color = fill;
+                    // Body rectangle
                     Handles.DrawSolidRectangleWithOutline(
                         new[] { topCenter + side, topCenter - side, bottomCenter - side, bottomCenter + side },
                         fill, Color.clear);
+                    // Top half-circle (fan triangles)
+                    for (var i = 0; i < halfSegments; i++)
+                    {
+                        var a0 = Mathf.PI * i / halfSegments;
+                        var a1 = Mathf.PI * (i + 1) / halfSegments;
+                        var p0 = topCenter + (sideDir * Mathf.Cos(a0) + upDir * Mathf.Sin(a0)) * r;
+                        var p1 = topCenter + (sideDir * Mathf.Cos(a1) + upDir * Mathf.Sin(a1)) * r;
+                        Handles.DrawAAConvexPolygon(topCenter, p0, p1);
+                    }
+                    // Bottom half-circle
+                    for (var i = 0; i < halfSegments; i++)
+                    {
+                        var a0 = Mathf.PI + Mathf.PI * i / halfSegments;
+                        var a1 = Mathf.PI + Mathf.PI * (i + 1) / halfSegments;
+                        var p0 = bottomCenter + (sideDir * Mathf.Cos(a0) + upDir * Mathf.Sin(a0)) * r;
+                        var p1 = bottomCenter + (sideDir * Mathf.Cos(a1) + upDir * Mathf.Sin(a1)) * r;
+                        Handles.DrawAAConvexPolygon(bottomCenter, p0, p1);
+                    }
                 }
-            }
-            if (_showBorder)
-            {
-                Handles.color = border;
-                Handles.DrawWireDisc(topCenter, camNormal, r, _borderWidth);
-                Handles.DrawWireDisc(bottomCenter, camNormal, r, _borderWidth);
-                if (halfH > 0f)
+                if (_showBorder)
                 {
+                    Handles.color = border;
+                    // Side lines
                     Handles.DrawLine(topCenter + side, bottomCenter + side, _borderWidth);
                     Handles.DrawLine(topCenter - side, bottomCenter - side, _borderWidth);
+                    // Top half-arc
+                    var prev = topCenter + side;
+                    for (var i = 1; i <= halfSegments; i++)
+                    {
+                        var angle = Mathf.PI * i / halfSegments;
+                        var next = topCenter + (sideDir * Mathf.Cos(angle) + upDir * Mathf.Sin(angle)) * r;
+                        Handles.DrawLine(prev, next, _borderWidth);
+                        prev = next;
+                    }
+                    // Bottom half-arc
+                    prev = bottomCenter - side;
+                    for (var i = 1; i <= halfSegments; i++)
+                    {
+                        var angle = Mathf.PI + Mathf.PI * i / halfSegments;
+                        var next = bottomCenter + (sideDir * Mathf.Cos(angle) + upDir * Mathf.Sin(angle)) * r;
+                        Handles.DrawLine(prev, next, _borderWidth);
+                        prev = next;
+                    }
                 }
             }
         }
