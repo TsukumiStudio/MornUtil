@@ -407,14 +407,8 @@ namespace MornLib
         {
             var oldColor = Handles.color;
             Handles.color = color;
-            for (var offset = -_borderWidth / 2; offset <= _borderWidth / 2; offset += 0.5f)
-            {
-                var oc = new Vector3[4];
-                for (var i = 0; i < 4; i++)
-                    oc[i] = guiCorners[i] + Vector3.one * offset;
-                for (var i = 0; i < 4; i++)
-                    Handles.DrawLine(oc[i], oc[(i + 1) % 4]);
-            }
+            for (var i = 0; i < 4; i++)
+                Handles.DrawLine(guiCorners[i], guiCorners[(i + 1) % 4], _borderWidth);
             Handles.color = oldColor;
         }
 
@@ -477,7 +471,7 @@ namespace MornLib
                 var oldColor = Handles.color;
                 Handles.color = border;
                 for (var i = 0; i < 4; i++)
-                    Handles.DrawLine(corners[i], corners[(i + 1) % 4]);
+                    Handles.DrawLine(corners[i], corners[(i + 1) % 4], _borderWidth);
                 Handles.color = oldColor;
             }
         }
@@ -497,7 +491,7 @@ namespace MornLib
             if (_showBorder)
             {
                 Handles.color = border;
-                Handles.DrawWireDisc(center, Vector3.forward, radius);
+                Handles.DrawWireDisc(center, Vector3.forward, radius, _borderWidth);
             }
         }
 
@@ -521,7 +515,7 @@ namespace MornLib
                 {
                     var angle = 2f * Mathf.PI * i / segments;
                     var next = center + new Vector3(halfW * Mathf.Cos(angle), halfH * Mathf.Sin(angle), 0);
-                    Handles.DrawLine(prev, next);
+                    Handles.DrawLine(prev, next, _borderWidth);
                     prev = next;
                 }
             }
@@ -552,7 +546,7 @@ namespace MornLib
                     Handles.color = border;
                     for (var i = 0; i < worldPath.Length; i++)
                     {
-                        Handles.DrawLine(worldPath[i], worldPath[(i + 1) % worldPath.Length]);
+                        Handles.DrawLine(worldPath[i], worldPath[(i + 1) % worldPath.Length], _borderWidth);
                     }
                 }
             }
@@ -570,7 +564,7 @@ namespace MornLib
             {
                 var a = t.TransformPoint(points[i]);
                 var b = t.TransformPoint(points[i + 1]);
-                Handles.DrawLine(a, b);
+                Handles.DrawLine(a, b, _borderWidth);
             }
         }
     }
