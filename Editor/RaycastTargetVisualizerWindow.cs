@@ -300,17 +300,37 @@ namespace MornLib
         {
             _c2dFillColor = EditorGUILayout.ColorField("塗りつぶし色", _c2dFillColor);
             _c2dBorderColor = EditorGUILayout.ColorField("枠線色", _c2dBorderColor);
-            _c2dShowTriggers = EditorGUILayout.Toggle("Trigger表示", _c2dShowTriggers);
-            _c2dShowNonTriggers = EditorGUILayout.Toggle("非Trigger表示", _c2dShowNonTriggers);
+            DrawTriggerFilterButtons(ref _c2dShowTriggers, ref _c2dShowNonTriggers);
         }
 
         private void DrawCollider3DSettings()
         {
             _c3dFillColor = EditorGUILayout.ColorField("塗りつぶし色", _c3dFillColor);
             _c3dBorderColor = EditorGUILayout.ColorField("枠線色", _c3dBorderColor);
-            _c3dShowTriggers = EditorGUILayout.Toggle("Trigger表示", _c3dShowTriggers);
-            _c3dShowNonTriggers = EditorGUILayout.Toggle("非Trigger表示", _c3dShowNonTriggers);
+            DrawTriggerFilterButtons(ref _c3dShowTriggers, ref _c3dShowNonTriggers);
             _c3dIncludeMesh = EditorGUILayout.Toggle("MeshColliderを含む", _c3dIncludeMesh);
+        }
+
+        private static void DrawTriggerFilterButtons(ref bool showTriggers, ref bool showNonTriggers)
+        {
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.PrefixLabel("フィルタ");
+
+            var onColor = new Color(0.3f, 0.7f, 0.3f);
+            var offColor = new Color(0.5f, 0.5f, 0.5f);
+
+            var oldBg = GUI.backgroundColor;
+
+            GUI.backgroundColor = showTriggers ? onColor : offColor;
+            if (GUILayout.Button("Trigger", GUILayout.Height(22)))
+                showTriggers = !showTriggers;
+
+            GUI.backgroundColor = showNonTriggers ? onColor : offColor;
+            if (GUILayout.Button("非Trigger", GUILayout.Height(22)))
+                showNonTriggers = !showNonTriggers;
+
+            GUI.backgroundColor = oldBg;
+            EditorGUILayout.EndHorizontal();
         }
 
         private void OnPlayModeStateChanged(PlayModeStateChange state)
