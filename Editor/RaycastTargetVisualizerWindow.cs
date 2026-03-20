@@ -584,7 +584,7 @@ namespace MornLib
             if (_showLabel)
             {
                 var worldCenter = (corners[0] + corners[2]) / 2f;
-                _pendingLabels.Add((worldCenter, graphic.GetType().Name));
+                _pendingLabels.Add((worldCenter, graphic.gameObject.name));
             }
         }
 
