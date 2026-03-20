@@ -176,7 +176,7 @@ namespace MornLib
             switch (_currentTab)
             {
                 case Tab.UGUI:
-                    _uguiEnabled = EditorGUILayout.Toggle("UGUI可視化を有効にする", _uguiEnabled);
+                    _uguiEnabled = EditorGUILayout.Toggle("有効化", _uguiEnabled);
                     EditorGUILayout.Space();
                     using (new EditorGUI.DisabledGroupScope(!_uguiEnabled))
                     {
@@ -184,7 +184,7 @@ namespace MornLib
                     }
                     break;
                 case Tab.Collider2D:
-                    _collider2DEnabled = EditorGUILayout.Toggle("Collider2D可視化を有効にする", _collider2DEnabled);
+                    _collider2DEnabled = EditorGUILayout.Toggle("有効化", _collider2DEnabled);
                     EditorGUILayout.Space();
                     using (new EditorGUI.DisabledGroupScope(!_collider2DEnabled))
                     {
