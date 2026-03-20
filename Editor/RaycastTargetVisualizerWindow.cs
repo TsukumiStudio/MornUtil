@@ -316,7 +316,7 @@ namespace MornLib
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.PrefixLabel("フィルタ");
 
-            var onColor = new Color(0.3f, 0.7f, 0.3f);
+            var onColor = new Color(0.5f, 0.9f, 0.2f);
             var offColor = new Color(0.5f, 0.5f, 0.5f);
 
             var oldBg = GUI.backgroundColor;
