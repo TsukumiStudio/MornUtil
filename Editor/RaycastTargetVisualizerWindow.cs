@@ -770,9 +770,7 @@ namespace MornLib
                 {
                     Handles.color = fill;
                     // Body rectangle
-                    Handles.DrawSolidRectangleWithOutline(
-                        new[] { topCenter + side, topCenter - side, bottomCenter - side, bottomCenter + side },
-                        fill, Color.clear);
+                    Handles.DrawAAConvexPolygon(topCenter + side, topCenter - side, bottomCenter - side, bottomCenter + side);
                     // Top half-circle (fan triangles)
                     for (var i = 0; i < halfSegments; i++)
                     {
