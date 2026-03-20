@@ -321,13 +321,13 @@ namespace MornLib
 
             var oldBg = GUI.backgroundColor;
 
+            GUI.backgroundColor = showNonTriggers ? onColor : offColor;
+            if (GUILayout.Button("Collider", GUILayout.Height(22)))
+                showNonTriggers = !showNonTriggers;
+
             GUI.backgroundColor = showTriggers ? onColor : offColor;
             if (GUILayout.Button("Trigger", GUILayout.Height(22)))
                 showTriggers = !showTriggers;
-
-            GUI.backgroundColor = showNonTriggers ? onColor : offColor;
-            if (GUILayout.Button("非Trigger", GUILayout.Height(22)))
-                showNonTriggers = !showNonTriggers;
 
             GUI.backgroundColor = oldBg;
             EditorGUILayout.EndHorizontal();
