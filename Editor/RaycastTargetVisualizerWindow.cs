@@ -9,21 +9,39 @@ namespace MornLib
 {
     public sealed class RaycastTargetVisualizerWindow : EditorWindow
     {
+        private enum Tab
+        {
+            UGUI,
+            Collider2D,
+        }
+
         private const string PrefPrefix = "MornRaycastViz_";
 
         private static RaycastTargetVisualizerWindow _instance;
+
+        // --- Common ---
         private bool _isVisualizationEnabled;
-        private Color _visualizationColor = new(1f, 0f, 0f, 0.3f);
+        private Tab _currentTab;
+        private Color _fillColor = new(1f, 0f, 0f, 0.3f);
         private Color _borderColor = new(1f, 0f, 0f, 0.8f);
         private float _borderWidth = 2f;
         private bool _showBorder = true;
         private bool _showFill = true;
-        private bool _checkCanvasGroup = true;
         private int _labelFontSize = 10;
-        private readonly List<Graphic> cachedGraphics = new();
         private float _updateInterval = 0.1f;
         private float _lastUpdateTime;
         private GUIStyle _labelStyle;
+
+        // --- UGUI ---
+        private bool _checkCanvasGroup = true;
+        private readonly List<Graphic> _cachedGraphics = new();
+
+        // --- Collider2D ---
+        private Color _colliderFillColor = new(0f, 1f, 0f, 0.2f);
+        private Color _colliderBorderColor = new(0f, 1f, 0f, 0.8f);
+        private bool _showTriggers = true;
+        private bool _showNonTriggers = true;
+        private readonly List<Collider2D> _cachedColliders = new();
 
         [MenuItem("Tools/Raycastターゲット可視化")]
         public static void ShowWindow()
@@ -53,36 +71,56 @@ namespace MornLib
         private void LoadPrefs()
         {
             _isVisualizationEnabled = EditorPrefs.GetBool(PrefPrefix + "Enabled", false);
+            _currentTab = (Tab)EditorPrefs.GetInt(PrefPrefix + "Tab", 0);
             _showFill = EditorPrefs.GetBool(PrefPrefix + "ShowFill", true);
             _showBorder = EditorPrefs.GetBool(PrefPrefix + "ShowBorder", true);
-            _checkCanvasGroup = EditorPrefs.GetBool(PrefPrefix + "CheckCanvasGroup", true);
             _borderWidth = EditorPrefs.GetFloat(PrefPrefix + "BorderWidth", 2f);
             _updateInterval = EditorPrefs.GetFloat(PrefPrefix + "UpdateInterval", 0.1f);
             _labelFontSize = EditorPrefs.GetInt(PrefPrefix + "LabelFontSize", 10);
 
+            // UGUI
+            _checkCanvasGroup = EditorPrefs.GetBool(PrefPrefix + "CheckCanvasGroup", true);
             if (ColorUtility.TryParseHtmlString(EditorPrefs.GetString(PrefPrefix + "FillColor", ""), out var fc))
-                _visualizationColor = fc;
+                _fillColor = fc;
             if (ColorUtility.TryParseHtmlString(EditorPrefs.GetString(PrefPrefix + "BorderColor", ""), out var bc))
                 _borderColor = bc;
+
+            // Collider2D
+            _showTriggers = EditorPrefs.GetBool(PrefPrefix + "C2D_ShowTriggers", true);
+            _showNonTriggers = EditorPrefs.GetBool(PrefPrefix + "C2D_ShowNonTriggers", true);
+            if (ColorUtility.TryParseHtmlString(EditorPrefs.GetString(PrefPrefix + "C2D_FillColor", ""), out var cfc))
+                _colliderFillColor = cfc;
+            if (ColorUtility.TryParseHtmlString(EditorPrefs.GetString(PrefPrefix + "C2D_BorderColor", ""), out var cbc))
+                _colliderBorderColor = cbc;
         }
 
         private void SavePrefs()
         {
             EditorPrefs.SetBool(PrefPrefix + "Enabled", _isVisualizationEnabled);
+            EditorPrefs.SetInt(PrefPrefix + "Tab", (int)_currentTab);
             EditorPrefs.SetBool(PrefPrefix + "ShowFill", _showFill);
             EditorPrefs.SetBool(PrefPrefix + "ShowBorder", _showBorder);
-            EditorPrefs.SetBool(PrefPrefix + "CheckCanvasGroup", _checkCanvasGroup);
             EditorPrefs.SetFloat(PrefPrefix + "BorderWidth", _borderWidth);
             EditorPrefs.SetFloat(PrefPrefix + "UpdateInterval", _updateInterval);
             EditorPrefs.SetInt(PrefPrefix + "LabelFontSize", _labelFontSize);
-            EditorPrefs.SetString(PrefPrefix + "FillColor", "#" + ColorUtility.ToHtmlStringRGBA(_visualizationColor));
+
+            // UGUI
+            EditorPrefs.SetBool(PrefPrefix + "CheckCanvasGroup", _checkCanvasGroup);
+            EditorPrefs.SetString(PrefPrefix + "FillColor", "#" + ColorUtility.ToHtmlStringRGBA(_fillColor));
             EditorPrefs.SetString(PrefPrefix + "BorderColor", "#" + ColorUtility.ToHtmlStringRGBA(_borderColor));
+
+            // Collider2D
+            EditorPrefs.SetBool(PrefPrefix + "C2D_ShowTriggers", _showTriggers);
+            EditorPrefs.SetBool(PrefPrefix + "C2D_ShowNonTriggers", _showNonTriggers);
+            EditorPrefs.SetString(PrefPrefix + "C2D_FillColor", "#" + ColorUtility.ToHtmlStringRGBA(_colliderFillColor));
+            EditorPrefs.SetString(PrefPrefix + "C2D_BorderColor", "#" + ColorUtility.ToHtmlStringRGBA(_colliderBorderColor));
         }
 
         private void OnGUI()
         {
             EditorGUILayout.LabelField("Raycastターゲット可視化", EditorStyles.boldLabel);
             EditorGUILayout.Space();
+
             EditorGUI.BeginChangeCheck();
             _isVisualizationEnabled = EditorGUILayout.Toggle("可視化を有効にする", _isVisualizationEnabled);
             if (EditorGUI.EndChangeCheck())
@@ -90,130 +128,157 @@ namespace MornLib
                 if (_isVisualizationEnabled)
                 {
                     _lastUpdateTime = 0f;
-                    UpdateCachedGraphics();
+                    UpdateCache();
                 }
-
                 SavePrefs();
                 SceneView.RepaintAll();
             }
 
             EditorGUILayout.Space();
+
+            // Tab
+            EditorGUI.BeginChangeCheck();
+            _currentTab = (Tab)GUILayout.Toolbar((int)_currentTab, new[] { "UGUI", "Collider2D" });
+            if (EditorGUI.EndChangeCheck())
+            {
+                _lastUpdateTime = 0f;
+                UpdateCache();
+                SavePrefs();
+                SceneView.RepaintAll();
+            }
+
+            EditorGUILayout.Space();
+
             using (new EditorGUI.DisabledGroupScope(!_isVisualizationEnabled))
             {
                 EditorGUI.BeginChangeCheck();
 
-                EditorGUILayout.LabelField("表示設定", EditorStyles.boldLabel);
+                // Common
+                EditorGUILayout.LabelField("共通設定", EditorStyles.boldLabel);
                 _showFill = EditorGUILayout.Toggle("塗りつぶし表示", _showFill);
-                if (_showFill)
-                {
-                    _visualizationColor = EditorGUILayout.ColorField("塗りつぶし色", _visualizationColor);
-                }
-
                 _showBorder = EditorGUILayout.Toggle("枠線表示", _showBorder);
                 if (_showBorder)
                 {
-                    _borderColor = EditorGUILayout.ColorField("枠線色", _borderColor);
                     _borderWidth = EditorGUILayout.Slider("枠線の太さ", _borderWidth, 1f, 10f);
                 }
-
                 _labelFontSize = EditorGUILayout.IntSlider("文字サイズ", _labelFontSize, 6, 24);
-
-                EditorGUILayout.Space();
-
-                var prevCheckCanvasGroup = _checkCanvasGroup;
-                _checkCanvasGroup = EditorGUILayout.Toggle("CanvasGroupを考慮", _checkCanvasGroup);
-                if (_checkCanvasGroup != prevCheckCanvasGroup)
-                {
-                    _lastUpdateTime = 0f;
-                    UpdateCachedGraphics();
-                    SceneView.RepaintAll();
-                }
-
-                EditorGUILayout.HelpBox(
-                    "有効時、CanvasGroupの設定（blocksRaycasts=false）でブロックされているGraphicを除外します",
-                    MessageType.Info);
-                EditorGUILayout.Space();
                 _updateInterval = EditorGUILayout.Slider("更新間隔", _updateInterval, 0.01f, 1f);
+
+                EditorGUILayout.Space();
+
+                // Tab-specific
+                switch (_currentTab)
+                {
+                    case Tab.UGUI:
+                        DrawUGUISettings();
+                        break;
+                    case Tab.Collider2D:
+                        DrawCollider2DSettings();
+                        break;
+                }
 
                 if (EditorGUI.EndChangeCheck())
                 {
                     _labelStyle = null;
+                    _lastUpdateTime = 0f;
+                    UpdateCache();
                     SavePrefs();
                     SceneView.RepaintAll();
                 }
 
                 EditorGUILayout.Space();
-                EditorGUILayout.LabelField($"キャッシュ済みGraphic数: {cachedGraphics.Count}");
+
+                // Status
+                var count = _currentTab == Tab.UGUI ? _cachedGraphics.Count : _cachedColliders.Count;
+                EditorGUILayout.LabelField($"キャッシュ済み: {count}");
 
                 if (_isVisualizationEnabled)
                 {
                     EditorGUILayout.LabelField($"{_updateInterval:F2}秒ごとに自動更新中", EditorStyles.helpBox);
-                    EditorGUILayout.LabelField($"最終更新: {Time.realtimeSinceStartup - _lastUpdateTime:F2}秒前");
-                    EditorGUILayout.LabelField(
-                        $"モード: {(EditorApplication.isPlaying ? "再生中" : "編集中")}",
-                        EditorStyles.miniLabel);
-                }
-                else
-                {
-                    EditorGUILayout.LabelField("自動更新無効（可視化OFF）", EditorStyles.helpBox);
                 }
 
                 if (GUILayout.Button("強制更新"))
                 {
-                    UpdateCachedGraphics();
+                    UpdateCache();
                     SceneView.RepaintAll();
                 }
             }
         }
 
+        private void DrawUGUISettings()
+        {
+            EditorGUILayout.LabelField("UGUI設定", EditorStyles.boldLabel);
+            if (_showFill)
+            {
+                _fillColor = EditorGUILayout.ColorField("塗りつぶし色", _fillColor);
+            }
+            if (_showBorder)
+            {
+                _borderColor = EditorGUILayout.ColorField("枠線色", _borderColor);
+            }
+            _checkCanvasGroup = EditorGUILayout.Toggle("CanvasGroupを考慮", _checkCanvasGroup);
+            EditorGUILayout.HelpBox(
+                "有効時、blocksRaycasts=falseのCanvasGroup配下のGraphicを除外します",
+                MessageType.Info);
+        }
+
+        private void DrawCollider2DSettings()
+        {
+            EditorGUILayout.LabelField("Collider2D設定", EditorStyles.boldLabel);
+            if (_showFill)
+            {
+                _colliderFillColor = EditorGUILayout.ColorField("塗りつぶし色", _colliderFillColor);
+            }
+            if (_showBorder)
+            {
+                _colliderBorderColor = EditorGUILayout.ColorField("枠線色", _colliderBorderColor);
+            }
+            _showTriggers = EditorGUILayout.Toggle("Trigger表示", _showTriggers);
+            _showNonTriggers = EditorGUILayout.Toggle("非Trigger表示", _showNonTriggers);
+        }
+
         private void OnPlayModeStateChanged(PlayModeStateChange state)
         {
-            if (_isVisualizationEnabled)
-            {
-                UpdateCachedGraphics();
-                _lastUpdateTime = Time.realtimeSinceStartup;
-                SceneView.RepaintAll();
-                Repaint();
-            }
+            if (!_isVisualizationEnabled) return;
+            UpdateCache();
+            _lastUpdateTime = Time.realtimeSinceStartup;
+            SceneView.RepaintAll();
+            Repaint();
         }
 
         private void OnEditorUpdate()
         {
             if (!_isVisualizationEnabled) return;
-
             if (Time.realtimeSinceStartup - _lastUpdateTime > _updateInterval)
             {
-                UpdateCachedGraphics();
+                UpdateCache();
                 _lastUpdateTime = Time.realtimeSinceStartup;
                 SceneView.RepaintAll();
                 Repaint();
             }
         }
 
-        private bool IsGraphicRaycastable(Graphic graphic)
+        // ==================== Cache ====================
+
+        private void UpdateCache()
         {
-            if (!graphic.raycastTarget) return false;
-            if (!graphic.gameObject.activeInHierarchy) return false;
-            if (!_checkCanvasGroup) return true;
-
-            CanvasGroup[] canvasGroups = graphic.GetComponentsInParent<CanvasGroup>(true);
-            foreach (var canvasGroup in canvasGroups)
+            switch (_currentTab)
             {
-                if (!canvasGroup.blocksRaycasts) return false;
-                if (canvasGroup.ignoreParentGroups) break;
+                case Tab.UGUI:
+                    UpdateCachedGraphics();
+                    break;
+                case Tab.Collider2D:
+                    UpdateCachedColliders();
+                    break;
             }
-
-            return true;
         }
 
-        private void UpdateCachedGraphics()
+        private void ForEachRoot(System.Action<GameObject> action)
         {
-            cachedGraphics.Clear();
-
             var prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
             if (prefabStage != null)
             {
-                CollectGraphics(prefabStage.prefabContentsRoot);
+                action(prefabStage.prefabContentsRoot);
                 return;
             }
 
@@ -223,34 +288,91 @@ namespace MornLib
                 if (!scene.isLoaded) continue;
                 foreach (var root in scene.GetRootGameObjects())
                 {
-                    CollectGraphics(root);
+                    action(root);
                 }
             }
         }
 
-        private void CollectGraphics(GameObject root)
+        private void UpdateCachedGraphics()
         {
-            foreach (var graphic in root.GetComponentsInChildren<Graphic>(true))
+            _cachedGraphics.Clear();
+            ForEachRoot(root =>
             {
-                if (graphic != null && IsGraphicRaycastable(graphic))
+                foreach (var graphic in root.GetComponentsInChildren<Graphic>(true))
                 {
-                    cachedGraphics.Add(graphic);
+                    if (graphic != null && IsGraphicRaycastable(graphic))
+                    {
+                        _cachedGraphics.Add(graphic);
+                    }
                 }
-            }
+            });
         }
+
+        private void UpdateCachedColliders()
+        {
+            _cachedColliders.Clear();
+            ForEachRoot(root =>
+            {
+                foreach (var col in root.GetComponentsInChildren<Collider2D>(true))
+                {
+                    if (col == null || !col.enabled || !col.gameObject.activeInHierarchy) continue;
+                    if (col.isTrigger && !_showTriggers) continue;
+                    if (!col.isTrigger && !_showNonTriggers) continue;
+                    _cachedColliders.Add(col);
+                }
+            });
+        }
+
+        private bool IsGraphicRaycastable(Graphic graphic)
+        {
+            if (!graphic.raycastTarget) return false;
+            if (!graphic.gameObject.activeInHierarchy) return false;
+            if (!_checkCanvasGroup) return true;
+
+            var canvasGroups = graphic.GetComponentsInParent<CanvasGroup>(true);
+            foreach (var cg in canvasGroups)
+            {
+                if (!cg.blocksRaycasts) return false;
+                if (cg.ignoreParentGroups) break;
+            }
+            return true;
+        }
+
+        // ==================== Drawing ====================
 
         private void OnSceneGUI(SceneView sceneView)
         {
             if (!_isVisualizationEnabled) return;
 
+            switch (_currentTab)
+            {
+                case Tab.UGUI:
+                    DrawUGUIOverlay();
+                    break;
+                case Tab.Collider2D:
+                    DrawCollider2DOverlay();
+                    break;
+            }
+        }
+
+        private void DrawUGUIOverlay()
+        {
             Handles.BeginGUI();
-            foreach (var graphic in cachedGraphics)
+            foreach (var graphic in _cachedGraphics)
             {
                 if (graphic == null || !graphic.gameObject.activeInHierarchy) continue;
                 DrawGraphicVisualization(graphic);
             }
-
             Handles.EndGUI();
+        }
+
+        private void DrawCollider2DOverlay()
+        {
+            foreach (var col in _cachedColliders)
+            {
+                if (col == null || !col.enabled || !col.gameObject.activeInHierarchy) continue;
+                DrawCollider2DVisualization(col);
+            }
         }
 
         private GUIStyle GetLabelStyle()
@@ -268,55 +390,214 @@ namespace MornLib
 
         private void DrawGraphicVisualization(Graphic graphic)
         {
-            RectTransform rectTransform = graphic.rectTransform;
-            Canvas canvas = graphic.canvas;
-            if (rectTransform == null || canvas == null) return;
+            var rt = graphic.rectTransform;
+            if (rt == null || graphic.canvas == null) return;
 
-            Vector3[] worldCorners = new Vector3[4];
-            rectTransform.GetWorldCorners(worldCorners);
+            var worldCorners = new Vector3[4];
+            rt.GetWorldCorners(worldCorners);
 
-            Vector3[] guiCorners = new Vector3[4];
-            for (int i = 0; i < 4; i++)
+            var guiCorners = new Vector3[4];
+            for (var i = 0; i < 4; i++)
             {
                 guiCorners[i] = HandleUtility.WorldToGUIPoint(worldCorners[i]);
             }
 
+            Handles.BeginGUI();
+
             if (_showFill)
             {
-                Handles.DrawSolidRectangleWithOutline(guiCorners, _visualizationColor, Color.clear);
+                Handles.DrawSolidRectangleWithOutline(guiCorners, _fillColor, Color.clear);
             }
-
             if (_showBorder)
             {
-                Color oldColor = Handles.color;
-                Handles.color = _borderColor;
-
-                for (float offset = -_borderWidth / 2; offset <= _borderWidth / 2; offset += 0.5f)
-                {
-                    Vector3[] offsetCorners = new Vector3[4];
-                    for (int i = 0; i < 4; i++)
-                    {
-                        offsetCorners[i] = guiCorners[i] + Vector3.one * offset;
-                    }
-
-                    for (int i = 0; i < 4; i++)
-                    {
-                        int nextIndex = (i + 1) % 4;
-                        Handles.DrawLine(offsetCorners[i], offsetCorners[nextIndex]);
-                    }
-                }
-
-                Handles.color = oldColor;
+                DrawBorderGUI(guiCorners, _borderColor);
             }
 
             var style = GetLabelStyle();
-            Vector2 center = (guiCorners[0] + guiCorners[2]) / 2f;
+            var center = (guiCorners[0] + guiCorners[2]) / 2f;
             var labelWidth = _labelFontSize * 10f;
             var labelHeight = _labelFontSize + 4f;
             GUI.Label(
                 new Rect(center.x - labelWidth / 2f, center.y - labelHeight / 2f, labelWidth, labelHeight),
-                graphic.GetType().Name,
-                style);
+                graphic.GetType().Name, style);
+
+            Handles.EndGUI();
+        }
+
+        private void DrawBorderGUI(Vector3[] guiCorners, Color color)
+        {
+            var oldColor = Handles.color;
+            Handles.color = color;
+            for (var offset = -_borderWidth / 2; offset <= _borderWidth / 2; offset += 0.5f)
+            {
+                var oc = new Vector3[4];
+                for (var i = 0; i < 4; i++)
+                    oc[i] = guiCorners[i] + Vector3.one * offset;
+                for (var i = 0; i < 4; i++)
+                    Handles.DrawLine(oc[i], oc[(i + 1) % 4]);
+            }
+            Handles.color = oldColor;
+        }
+
+        private void DrawCollider2DVisualization(Collider2D col)
+        {
+            var fill = _colliderFillColor;
+            var border = _colliderBorderColor;
+
+            // Trigger は色を薄くして区別
+            if (col.isTrigger)
+            {
+                fill.a *= 0.5f;
+                border.a *= 0.7f;
+            }
+
+            switch (col)
+            {
+                case BoxCollider2D box:
+                    DrawBoxCollider2D(box, fill, border);
+                    break;
+                case CircleCollider2D circle:
+                    DrawCircleCollider2D(circle, fill, border);
+                    break;
+                case CapsuleCollider2D capsule:
+                    DrawCapsuleCollider2D(capsule, fill, border);
+                    break;
+                case PolygonCollider2D polygon:
+                    DrawPolygonCollider2D(polygon, fill, border);
+                    break;
+                case EdgeCollider2D edge:
+                    DrawEdgeCollider2D(edge, border);
+                    break;
+            }
+
+            // Label
+            var worldPos = col.transform.TransformPoint(col.offset);
+            var labelText = col.isTrigger ? $"{col.GetType().Name} (T)" : col.GetType().Name;
+            Handles.Label(worldPos, labelText, GetLabelStyle());
+        }
+
+        private void DrawBoxCollider2D(BoxCollider2D box, Color fill, Color border)
+        {
+            var t = box.transform;
+            var center = t.TransformPoint(box.offset);
+            var size = box.size;
+            var halfX = size.x / 2f;
+            var halfY = size.y / 2f;
+
+            var corners = new[]
+            {
+                t.TransformPoint(box.offset + new Vector2(-halfX, -halfY)),
+                t.TransformPoint(box.offset + new Vector2(-halfX, halfY)),
+                t.TransformPoint(box.offset + new Vector2(halfX, halfY)),
+                t.TransformPoint(box.offset + new Vector2(halfX, -halfY)),
+            };
+
+            if (_showFill)
+            {
+                Handles.DrawSolidRectangleWithOutline(corners, fill, Color.clear);
+            }
+            if (_showBorder)
+            {
+                var oldColor = Handles.color;
+                Handles.color = border;
+                for (var i = 0; i < 4; i++)
+                    Handles.DrawLine(corners[i], corners[(i + 1) % 4]);
+                Handles.color = oldColor;
+            }
+        }
+
+        private void DrawCircleCollider2D(CircleCollider2D circle, Color fill, Color border)
+        {
+            var t = circle.transform;
+            var center = t.TransformPoint(circle.offset);
+            var scale = Mathf.Max(Mathf.Abs(t.lossyScale.x), Mathf.Abs(t.lossyScale.y));
+            var radius = circle.radius * scale;
+
+            if (_showFill)
+            {
+                Handles.color = fill;
+                Handles.DrawSolidDisc(center, Vector3.forward, radius);
+            }
+            if (_showBorder)
+            {
+                Handles.color = border;
+                Handles.DrawWireDisc(center, Vector3.forward, radius);
+            }
+        }
+
+        private void DrawCapsuleCollider2D(CapsuleCollider2D capsule, Color fill, Color border)
+        {
+            // Capsule を簡易的にワイヤーフレームで表示
+            var t = capsule.transform;
+            var center = t.TransformPoint(capsule.offset);
+            var sx = Mathf.Abs(t.lossyScale.x);
+            var sy = Mathf.Abs(t.lossyScale.y);
+            var w = capsule.size.x * sx;
+            var h = capsule.size.y * sy;
+
+            if (_showBorder)
+            {
+                Handles.color = border;
+                // 簡易：楕円で近似
+                var halfW = w / 2f;
+                var halfH = h / 2f;
+                const int segments = 32;
+                var prev = center + new Vector3(halfW * Mathf.Cos(0), halfH * Mathf.Sin(0), 0);
+                for (var i = 1; i <= segments; i++)
+                {
+                    var angle = 2f * Mathf.PI * i / segments;
+                    var next = center + new Vector3(halfW * Mathf.Cos(angle), halfH * Mathf.Sin(angle), 0);
+                    Handles.DrawLine(prev, next);
+                    prev = next;
+                }
+            }
+        }
+
+        private void DrawPolygonCollider2D(PolygonCollider2D polygon, Color fill, Color border)
+        {
+            var t = polygon.transform;
+
+            for (var p = 0; p < polygon.pathCount; p++)
+            {
+                var path = polygon.GetPath(p);
+                if (path.Length < 2) continue;
+
+                var worldPath = new Vector3[path.Length];
+                for (var i = 0; i < path.Length; i++)
+                {
+                    worldPath[i] = t.TransformPoint(path[i]);
+                }
+
+                if (_showFill && path.Length >= 3)
+                {
+                    Handles.color = fill;
+                    Handles.DrawAAConvexPolygon(worldPath);
+                }
+                if (_showBorder)
+                {
+                    Handles.color = border;
+                    for (var i = 0; i < worldPath.Length; i++)
+                    {
+                        Handles.DrawLine(worldPath[i], worldPath[(i + 1) % worldPath.Length]);
+                    }
+                }
+            }
+        }
+
+        private void DrawEdgeCollider2D(EdgeCollider2D edge, Color border)
+        {
+            if (!_showBorder) return;
+            var t = edge.transform;
+            var points = edge.points;
+            if (points.Length < 2) return;
+
+            Handles.color = border;
+            for (var i = 0; i < points.Length - 1; i++)
+            {
+                var a = t.TransformPoint(points[i]);
+                var b = t.TransformPoint(points[i + 1]);
+                Handles.DrawLine(a, b);
+            }
         }
     }
 }
