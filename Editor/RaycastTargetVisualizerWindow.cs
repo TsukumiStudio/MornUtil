@@ -20,10 +20,7 @@ namespace MornLib
         private static RaycastTargetVisualizerWindow _instance;
 
         // --- Common ---
-        private bool _isVisualizationEnabled;
         private Tab _currentTab;
-        private Color _fillColor = new(1f, 0f, 0f, 0.3f);
-        private Color _borderColor = new(1f, 0f, 0f, 0.8f);
         private float _borderWidth = 2f;
         private bool _showBorder = true;
         private bool _showFill = true;
@@ -33,15 +30,21 @@ namespace MornLib
         private GUIStyle _labelStyle;
 
         // --- UGUI ---
+        private bool _uguiEnabled;
+        private Color _uguiFillColor = new(1f, 0f, 0f, 0.3f);
+        private Color _uguiBorderColor = new(1f, 0f, 0f, 0.8f);
         private bool _checkCanvasGroup = true;
         private readonly List<Graphic> _cachedGraphics = new();
 
         // --- Collider2D ---
+        private bool _collider2DEnabled;
         private Color _colliderFillColor = new(0f, 1f, 0f, 0.2f);
         private Color _colliderBorderColor = new(0f, 1f, 0f, 0.8f);
         private bool _showTriggers = true;
         private bool _showNonTriggers = true;
         private readonly List<Collider2D> _cachedColliders = new();
+
+        private bool AnyEnabled => _uguiEnabled || _collider2DEnabled;
 
         [MenuItem("Tools/Raycastターゲット可視化")]
         public static void ShowWindow()
@@ -70,7 +73,6 @@ namespace MornLib
 
         private void LoadPrefs()
         {
-            _isVisualizationEnabled = EditorPrefs.GetBool(PrefPrefix + "Enabled", false);
             _currentTab = (Tab)EditorPrefs.GetInt(PrefPrefix + "Tab", 0);
             _showFill = EditorPrefs.GetBool(PrefPrefix + "ShowFill", true);
             _showBorder = EditorPrefs.GetBool(PrefPrefix + "ShowBorder", true);
@@ -78,14 +80,14 @@ namespace MornLib
             _updateInterval = EditorPrefs.GetFloat(PrefPrefix + "UpdateInterval", 0.1f);
             _labelFontSize = EditorPrefs.GetInt(PrefPrefix + "LabelFontSize", 10);
 
-            // UGUI
+            _uguiEnabled = EditorPrefs.GetBool(PrefPrefix + "UGUI_Enabled", false);
             _checkCanvasGroup = EditorPrefs.GetBool(PrefPrefix + "CheckCanvasGroup", true);
             if (ColorUtility.TryParseHtmlString(EditorPrefs.GetString(PrefPrefix + "FillColor", ""), out var fc))
-                _fillColor = fc;
+                _uguiFillColor = fc;
             if (ColorUtility.TryParseHtmlString(EditorPrefs.GetString(PrefPrefix + "BorderColor", ""), out var bc))
-                _borderColor = bc;
+                _uguiBorderColor = bc;
 
-            // Collider2D
+            _collider2DEnabled = EditorPrefs.GetBool(PrefPrefix + "C2D_Enabled", false);
             _showTriggers = EditorPrefs.GetBool(PrefPrefix + "C2D_ShowTriggers", true);
             _showNonTriggers = EditorPrefs.GetBool(PrefPrefix + "C2D_ShowNonTriggers", true);
             if (ColorUtility.TryParseHtmlString(EditorPrefs.GetString(PrefPrefix + "C2D_FillColor", ""), out var cfc))
@@ -96,7 +98,6 @@ namespace MornLib
 
         private void SavePrefs()
         {
-            EditorPrefs.SetBool(PrefPrefix + "Enabled", _isVisualizationEnabled);
             EditorPrefs.SetInt(PrefPrefix + "Tab", (int)_currentTab);
             EditorPrefs.SetBool(PrefPrefix + "ShowFill", _showFill);
             EditorPrefs.SetBool(PrefPrefix + "ShowBorder", _showBorder);
@@ -104,16 +105,26 @@ namespace MornLib
             EditorPrefs.SetFloat(PrefPrefix + "UpdateInterval", _updateInterval);
             EditorPrefs.SetInt(PrefPrefix + "LabelFontSize", _labelFontSize);
 
-            // UGUI
+            EditorPrefs.SetBool(PrefPrefix + "UGUI_Enabled", _uguiEnabled);
             EditorPrefs.SetBool(PrefPrefix + "CheckCanvasGroup", _checkCanvasGroup);
-            EditorPrefs.SetString(PrefPrefix + "FillColor", "#" + ColorUtility.ToHtmlStringRGBA(_fillColor));
-            EditorPrefs.SetString(PrefPrefix + "BorderColor", "#" + ColorUtility.ToHtmlStringRGBA(_borderColor));
+            EditorPrefs.SetString(PrefPrefix + "FillColor", "#" + ColorUtility.ToHtmlStringRGBA(_uguiFillColor));
+            EditorPrefs.SetString(PrefPrefix + "BorderColor", "#" + ColorUtility.ToHtmlStringRGBA(_uguiBorderColor));
 
-            // Collider2D
+            EditorPrefs.SetBool(PrefPrefix + "C2D_Enabled", _collider2DEnabled);
             EditorPrefs.SetBool(PrefPrefix + "C2D_ShowTriggers", _showTriggers);
             EditorPrefs.SetBool(PrefPrefix + "C2D_ShowNonTriggers", _showNonTriggers);
             EditorPrefs.SetString(PrefPrefix + "C2D_FillColor", "#" + ColorUtility.ToHtmlStringRGBA(_colliderFillColor));
             EditorPrefs.SetString(PrefPrefix + "C2D_BorderColor", "#" + ColorUtility.ToHtmlStringRGBA(_colliderBorderColor));
+        }
+
+        private string TabLabel(Tab tab)
+        {
+            return tab switch
+            {
+                Tab.UGUI => (_uguiEnabled ? "\u2705 " : "\u274c ") + "UGUI",
+                Tab.Collider2D => (_collider2DEnabled ? "\u2705 " : "\u274c ") + "Collider2D",
+                _ => tab.ToString(),
+            };
         }
 
         private void OnGUI()
@@ -121,26 +132,54 @@ namespace MornLib
             EditorGUILayout.LabelField("Raycastターゲット可視化", EditorStyles.boldLabel);
             EditorGUILayout.Space();
 
+            // Tab
             EditorGUI.BeginChangeCheck();
-            _isVisualizationEnabled = EditorGUILayout.Toggle("可視化を有効にする", _isVisualizationEnabled);
+            var tabLabels = new[] { TabLabel(Tab.UGUI), TabLabel(Tab.Collider2D) };
+            _currentTab = (Tab)GUILayout.Toolbar((int)_currentTab, tabLabels);
             if (EditorGUI.EndChangeCheck())
             {
-                if (_isVisualizationEnabled)
-                {
-                    _lastUpdateTime = 0f;
-                    UpdateCache();
-                }
                 SavePrefs();
-                SceneView.RepaintAll();
             }
 
             EditorGUILayout.Space();
 
-            // Tab
+            // Tab-specific enable + settings
             EditorGUI.BeginChangeCheck();
-            _currentTab = (Tab)GUILayout.Toolbar((int)_currentTab, new[] { "UGUI", "Collider2D" });
+
+            switch (_currentTab)
+            {
+                case Tab.UGUI:
+                    _uguiEnabled = EditorGUILayout.Toggle("UGUI可視化を有効にする", _uguiEnabled);
+                    EditorGUILayout.Space();
+                    using (new EditorGUI.DisabledGroupScope(!_uguiEnabled))
+                    {
+                        DrawUGUISettings();
+                    }
+                    break;
+                case Tab.Collider2D:
+                    _collider2DEnabled = EditorGUILayout.Toggle("Collider2D可視化を有効にする", _collider2DEnabled);
+                    EditorGUILayout.Space();
+                    using (new EditorGUI.DisabledGroupScope(!_collider2DEnabled))
+                    {
+                        DrawCollider2DSettings();
+                    }
+                    break;
+            }
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("共通設定", EditorStyles.boldLabel);
+            _showFill = EditorGUILayout.Toggle("塗りつぶし表示", _showFill);
+            _showBorder = EditorGUILayout.Toggle("枠線表示", _showBorder);
+            if (_showBorder)
+            {
+                _borderWidth = EditorGUILayout.Slider("枠線の太さ", _borderWidth, 1f, 10f);
+            }
+            _labelFontSize = EditorGUILayout.IntSlider("文字サイズ", _labelFontSize, 6, 24);
+            _updateInterval = EditorGUILayout.Slider("更新間隔", _updateInterval, 0.01f, 1f);
+
             if (EditorGUI.EndChangeCheck())
             {
+                _labelStyle = null;
                 _lastUpdateTime = 0f;
                 UpdateCache();
                 SavePrefs();
@@ -149,72 +188,33 @@ namespace MornLib
 
             EditorGUILayout.Space();
 
-            using (new EditorGUI.DisabledGroupScope(!_isVisualizationEnabled))
+            // Status
+            if (_uguiEnabled)
+                EditorGUILayout.LabelField($"UGUI: {_cachedGraphics.Count}");
+            if (_collider2DEnabled)
+                EditorGUILayout.LabelField($"Collider2D: {_cachedColliders.Count}");
+
+            if (AnyEnabled)
             {
-                EditorGUI.BeginChangeCheck();
+                EditorGUILayout.LabelField($"{_updateInterval:F2}秒ごとに自動更新中", EditorStyles.helpBox);
+            }
 
-                // Common
-                EditorGUILayout.LabelField("共通設定", EditorStyles.boldLabel);
-                _showFill = EditorGUILayout.Toggle("塗りつぶし表示", _showFill);
-                _showBorder = EditorGUILayout.Toggle("枠線表示", _showBorder);
-                if (_showBorder)
-                {
-                    _borderWidth = EditorGUILayout.Slider("枠線の太さ", _borderWidth, 1f, 10f);
-                }
-                _labelFontSize = EditorGUILayout.IntSlider("文字サイズ", _labelFontSize, 6, 24);
-                _updateInterval = EditorGUILayout.Slider("更新間隔", _updateInterval, 0.01f, 1f);
-
-                EditorGUILayout.Space();
-
-                // Tab-specific
-                switch (_currentTab)
-                {
-                    case Tab.UGUI:
-                        DrawUGUISettings();
-                        break;
-                    case Tab.Collider2D:
-                        DrawCollider2DSettings();
-                        break;
-                }
-
-                if (EditorGUI.EndChangeCheck())
-                {
-                    _labelStyle = null;
-                    _lastUpdateTime = 0f;
-                    UpdateCache();
-                    SavePrefs();
-                    SceneView.RepaintAll();
-                }
-
-                EditorGUILayout.Space();
-
-                // Status
-                var count = _currentTab == Tab.UGUI ? _cachedGraphics.Count : _cachedColliders.Count;
-                EditorGUILayout.LabelField($"キャッシュ済み: {count}");
-
-                if (_isVisualizationEnabled)
-                {
-                    EditorGUILayout.LabelField($"{_updateInterval:F2}秒ごとに自動更新中", EditorStyles.helpBox);
-                }
-
-                if (GUILayout.Button("強制更新"))
-                {
-                    UpdateCache();
-                    SceneView.RepaintAll();
-                }
+            if (GUILayout.Button("強制更新"))
+            {
+                UpdateCache();
+                SceneView.RepaintAll();
             }
         }
 
         private void DrawUGUISettings()
         {
-            EditorGUILayout.LabelField("UGUI設定", EditorStyles.boldLabel);
             if (_showFill)
             {
-                _fillColor = EditorGUILayout.ColorField("塗りつぶし色", _fillColor);
+                _uguiFillColor = EditorGUILayout.ColorField("塗りつぶし色", _uguiFillColor);
             }
             if (_showBorder)
             {
-                _borderColor = EditorGUILayout.ColorField("枠線色", _borderColor);
+                _uguiBorderColor = EditorGUILayout.ColorField("枠線色", _uguiBorderColor);
             }
             _checkCanvasGroup = EditorGUILayout.Toggle("CanvasGroupを考慮", _checkCanvasGroup);
             EditorGUILayout.HelpBox(
@@ -224,7 +224,6 @@ namespace MornLib
 
         private void DrawCollider2DSettings()
         {
-            EditorGUILayout.LabelField("Collider2D設定", EditorStyles.boldLabel);
             if (_showFill)
             {
                 _colliderFillColor = EditorGUILayout.ColorField("塗りつぶし色", _colliderFillColor);
@@ -239,7 +238,7 @@ namespace MornLib
 
         private void OnPlayModeStateChanged(PlayModeStateChange state)
         {
-            if (!_isVisualizationEnabled) return;
+            if (!AnyEnabled) return;
             UpdateCache();
             _lastUpdateTime = Time.realtimeSinceStartup;
             SceneView.RepaintAll();
@@ -248,7 +247,7 @@ namespace MornLib
 
         private void OnEditorUpdate()
         {
-            if (!_isVisualizationEnabled) return;
+            if (!AnyEnabled) return;
             if (Time.realtimeSinceStartup - _lastUpdateTime > _updateInterval)
             {
                 UpdateCache();
@@ -262,15 +261,11 @@ namespace MornLib
 
         private void UpdateCache()
         {
-            switch (_currentTab)
-            {
-                case Tab.UGUI:
-                    UpdateCachedGraphics();
-                    break;
-                case Tab.Collider2D:
-                    UpdateCachedColliders();
-                    break;
-            }
+            if (_uguiEnabled) UpdateCachedGraphics();
+            else _cachedGraphics.Clear();
+
+            if (_collider2DEnabled) UpdateCachedColliders();
+            else _cachedColliders.Clear();
         }
 
         private void ForEachRoot(System.Action<GameObject> action)
@@ -342,17 +337,8 @@ namespace MornLib
 
         private void OnSceneGUI(SceneView sceneView)
         {
-            if (!_isVisualizationEnabled) return;
-
-            switch (_currentTab)
-            {
-                case Tab.UGUI:
-                    DrawUGUIOverlay();
-                    break;
-                case Tab.Collider2D:
-                    DrawCollider2DOverlay();
-                    break;
-            }
+            if (_uguiEnabled) DrawUGUIOverlay();
+            if (_collider2DEnabled) DrawCollider2DOverlay();
         }
 
         private void DrawUGUIOverlay()
@@ -402,15 +388,13 @@ namespace MornLib
                 guiCorners[i] = HandleUtility.WorldToGUIPoint(worldCorners[i]);
             }
 
-            Handles.BeginGUI();
-
             if (_showFill)
             {
-                Handles.DrawSolidRectangleWithOutline(guiCorners, _fillColor, Color.clear);
+                Handles.DrawSolidRectangleWithOutline(guiCorners, _uguiFillColor, Color.clear);
             }
             if (_showBorder)
             {
-                DrawBorderGUI(guiCorners, _borderColor);
+                DrawBorderGUI(guiCorners, _uguiBorderColor);
             }
 
             var style = GetLabelStyle();
@@ -420,8 +404,6 @@ namespace MornLib
             GUI.Label(
                 new Rect(center.x - labelWidth / 2f, center.y - labelHeight / 2f, labelWidth, labelHeight),
                 graphic.GetType().Name, style);
-
-            Handles.EndGUI();
         }
 
         private void DrawBorderGUI(Vector3[] guiCorners, Color color)
@@ -444,7 +426,6 @@ namespace MornLib
             var fill = _colliderFillColor;
             var border = _colliderBorderColor;
 
-            // Trigger は色を薄くして区別
             if (col.isTrigger)
             {
                 fill.a *= 0.5f;
@@ -470,7 +451,6 @@ namespace MornLib
                     break;
             }
 
-            // Label
             var worldPos = col.transform.TransformPoint(col.offset);
             var labelText = col.isTrigger ? $"{col.GetType().Name} (T)" : col.GetType().Name;
             Handles.Label(worldPos, labelText, GetLabelStyle());
@@ -479,7 +459,6 @@ namespace MornLib
         private void DrawBoxCollider2D(BoxCollider2D box, Color fill, Color border)
         {
             var t = box.transform;
-            var center = t.TransformPoint(box.offset);
             var size = box.size;
             var halfX = size.x / 2f;
             var halfY = size.y / 2f;
@@ -527,7 +506,6 @@ namespace MornLib
 
         private void DrawCapsuleCollider2D(CapsuleCollider2D capsule, Color fill, Color border)
         {
-            // Capsule を簡易的にワイヤーフレームで表示
             var t = capsule.transform;
             var center = t.TransformPoint(capsule.offset);
             var sx = Mathf.Abs(t.lossyScale.x);
@@ -538,7 +516,6 @@ namespace MornLib
             if (_showBorder)
             {
                 Handles.color = border;
-                // 簡易：楕円で近似
                 var halfW = w / 2f;
                 var halfH = h / 2f;
                 const int segments = 32;
