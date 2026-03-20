@@ -222,16 +222,18 @@ namespace MornLib
 
             // Common settings
             EditorGUILayout.LabelField("共通設定", EditorStyles.boldLabel);
-            _showFill = EditorGUILayout.Toggle("塗りつぶし表示", _showFill);
-            _showBorder = EditorGUILayout.Toggle("枠線表示", _showBorder);
+            DrawToggleButtons("描画", ref _showFill, "塗りつぶし", ref _showBorder, "枠線");
             _borderWidth = EditorGUILayout.Slider("枠線の太さ", _borderWidth, 1f, 10f);
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("文字", EditorStyles.boldLabel);
             _showLabel = EditorGUILayout.Toggle("文字表示", _showLabel);
-            _labelFontSize = EditorGUILayout.IntSlider("文字サイズ", _labelFontSize, 6, 24);
-            _labelColor = EditorGUILayout.ColorField("文字色", _labelColor);
-            _showLabelBg = EditorGUILayout.Toggle("文字背景", _showLabelBg);
-            _labelBgColor = EditorGUILayout.ColorField("背景色", _labelBgColor);
+            using (new EditorGUI.DisabledGroupScope(!_showLabel))
+            {
+                _labelFontSize = EditorGUILayout.IntSlider("文字サイズ", _labelFontSize, 6, 24);
+                _labelColor = EditorGUILayout.ColorField("文字色", _labelColor);
+                _showLabelBg = EditorGUILayout.Toggle("文字背景", _showLabelBg);
+                _labelBgColor = EditorGUILayout.ColorField("背景色", _labelBgColor);
+            }
 
             EditorGUILayout.Space();
             _updateInterval = EditorGUILayout.Slider("更新間隔", _updateInterval, 0.01f, 1f);
@@ -333,26 +335,28 @@ namespace MornLib
             _c3dIncludeMesh = EditorGUILayout.Toggle("MeshColliderを含む", _c3dIncludeMesh);
         }
 
-        private static void DrawTriggerFilterButtons(ref bool showTriggers, ref bool showNonTriggers)
+        private static void DrawToggleButtons(string label, ref bool a, string aLabel, ref bool b, string bLabel)
         {
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.PrefixLabel("フィルタ");
-
-            var onColor = Color.green;
-            var offColor = new Color(0.5f, 0.5f, 0.5f);
+            EditorGUILayout.PrefixLabel(label);
 
             var oldBg = GUI.backgroundColor;
 
-            GUI.backgroundColor = showNonTriggers ? onColor : offColor;
-            if (GUILayout.Button("Collider", GUILayout.Height(22)))
-                showNonTriggers = !showNonTriggers;
+            GUI.backgroundColor = a ? Color.green : new Color(0.5f, 0.5f, 0.5f);
+            if (GUILayout.Button(aLabel, GUILayout.Height(22)))
+                a = !a;
 
-            GUI.backgroundColor = showTriggers ? onColor : offColor;
-            if (GUILayout.Button("Trigger", GUILayout.Height(22)))
-                showTriggers = !showTriggers;
+            GUI.backgroundColor = b ? Color.green : new Color(0.5f, 0.5f, 0.5f);
+            if (GUILayout.Button(bLabel, GUILayout.Height(22)))
+                b = !b;
 
             GUI.backgroundColor = oldBg;
             EditorGUILayout.EndHorizontal();
+        }
+
+        private static void DrawTriggerFilterButtons(ref bool showTriggers, ref bool showNonTriggers)
+        {
+            DrawToggleButtons("フィルタ", ref showNonTriggers, "Collider", ref showTriggers, "Trigger");
         }
 
         private void OnPlayModeStateChanged(PlayModeStateChange state)
