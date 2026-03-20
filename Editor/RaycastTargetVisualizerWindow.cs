@@ -504,13 +504,13 @@ namespace MornLib
 
         private void DrawUGUIOverlay()
         {
-            Handles.BeginGUI();
+            var saved = Handles.color;
             foreach (var graphic in _cachedGraphics)
             {
                 if (graphic == null || !graphic.gameObject.activeInHierarchy) continue;
                 DrawGraphicVisualization(graphic);
             }
-            Handles.EndGUI();
+            Handles.color = saved;
         }
 
         private void DrawCollider2DOverlay()
@@ -569,39 +569,21 @@ namespace MornLib
             var rt = graphic.rectTransform;
             if (rt == null || graphic.canvas == null) return;
 
-            var worldCorners = new Vector3[4];
-            rt.GetWorldCorners(worldCorners);
-
-            // Skip if any corner is behind the camera
-            var sv = SceneView.currentDrawingSceneView;
-            if (sv != null && sv.camera != null)
-            {
-                var cam = sv.camera;
-                for (var i = 0; i < 4; i++)
-                {
-                    var vp = cam.WorldToViewportPoint(worldCorners[i]);
-                    if (vp.z < 0f) return;
-                }
-            }
-
-            var guiCorners = new Vector3[4];
-            for (var i = 0; i < 4; i++)
-                guiCorners[i] = HandleUtility.WorldToGUIPoint(worldCorners[i]);
+            var corners = new Vector3[4];
+            rt.GetWorldCorners(corners);
 
             if (_showFill)
-                Handles.DrawSolidRectangleWithOutline(guiCorners, _uguiFillColor, Color.clear);
+                Handles.DrawSolidRectangleWithOutline(corners, _uguiFillColor, Color.clear);
             if (_showBorder)
             {
-                var oldColor = Handles.color;
                 Handles.color = _uguiBorderColor;
                 for (var i = 0; i < 4; i++)
-                    Handles.DrawLine(guiCorners[i], guiCorners[(i + 1) % 4], _borderWidth);
-                Handles.color = oldColor;
+                    Handles.DrawLine(corners[i], corners[(i + 1) % 4], _borderWidth);
             }
 
             if (_showLabel)
             {
-                var worldCenter = (worldCorners[0] + worldCorners[2]) / 2f;
+                var worldCenter = (corners[0] + corners[2]) / 2f;
                 _pendingLabels.Add((worldCenter, graphic.GetType().Name));
             }
         }
