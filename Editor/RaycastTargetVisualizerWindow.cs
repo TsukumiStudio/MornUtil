@@ -241,12 +241,9 @@ namespace MornLib
             EditorGUILayout.Space();
 
             // Status
-            if (_uguiEnabled)
-                EditorGUILayout.LabelField($"UGUI: {_cachedGraphics.Count}");
-            if (_collider2DEnabled)
-                EditorGUILayout.LabelField($"Collider2D: {_cachedColliders2D.Count}");
-            if (_collider3DEnabled)
-                EditorGUILayout.LabelField($"Collider3D: {_cachedColliders3D.Count}");
+            EditorGUILayout.LabelField($"UGUI: {(_uguiEnabled ? _cachedGraphics.Count.ToString() : "OFF")}");
+            EditorGUILayout.LabelField($"Collider2D: {(_collider2DEnabled ? _cachedColliders2D.Count.ToString() : "OFF")}");
+            EditorGUILayout.LabelField($"Collider3D: {(_collider3DEnabled ? _cachedColliders3D.Count.ToString() : "OFF")}");
 
             if (GUILayout.Button("強制更新"))
             {
