@@ -48,8 +48,8 @@ namespace MornLib
 
         // --- Collider3D ---
         private bool _collider3DEnabled;
-        private Color _c3dFillColor = new(0.2f, 0.4f, 1f, 0.15f);
-        private Color _c3dBorderColor = new(0.3f, 0.5f, 1f, 0.8f);
+        private Color _c3dFillColor = new(0.1f, 0.2f, 1f, 0.15f);
+        private Color _c3dBorderColor = new(0.2f, 0.4f, 1f, 0.8f);
         private bool _c3dShowTriggers = true;
         private bool _c3dShowNonTriggers = true;
         private bool _c3dIncludeMesh;
@@ -147,6 +147,46 @@ namespace MornLib
             EditorPrefs.SetString(PrefPrefix + "C3D_BorderColor", "#" + ColorUtility.ToHtmlStringRGBA(_c3dBorderColor));
         }
 
+        private void ResetPrefs()
+        {
+            var keys = new[]
+            {
+                "Tab", "ShowFill", "ShowBorder", "BorderWidth", "UpdateInterval", "LabelFontSize", "LabelColor",
+                "UGUI_Enabled", "CheckCanvasGroup", "FillColor", "BorderColor",
+                "C2D_Enabled", "C2D_ShowTriggers", "C2D_ShowNonTriggers", "C2D_FillColor", "C2D_BorderColor",
+                "C3D_Enabled", "C3D_ShowTriggers", "C3D_ShowNonTriggers", "C3D_IncludeMesh", "C3D_FillColor", "C3D_BorderColor",
+            };
+            foreach (var key in keys)
+                EditorPrefs.DeleteKey(PrefPrefix + key);
+
+            // Reset fields to defaults
+            _currentTab = Tab.UGUI;
+            _showFill = true;
+            _showBorder = true;
+            _borderWidth = 2f;
+            _labelFontSize = 10;
+            _labelColor = Color.white;
+            _updateInterval = 0.1f;
+
+            _uguiEnabled = false;
+            _uguiFillColor = new Color(1f, 0f, 0f, 0.3f);
+            _uguiBorderColor = new Color(1f, 0f, 0f, 0.8f);
+            _checkCanvasGroup = true;
+
+            _collider2DEnabled = false;
+            _c2dFillColor = new Color(0f, 1f, 0f, 0.2f);
+            _c2dBorderColor = new Color(0f, 1f, 0f, 0.8f);
+            _c2dShowTriggers = true;
+            _c2dShowNonTriggers = true;
+
+            _collider3DEnabled = false;
+            _c3dFillColor = new Color(0.1f, 0.2f, 1f, 0.15f);
+            _c3dBorderColor = new Color(0.2f, 0.4f, 1f, 0.8f);
+            _c3dShowTriggers = true;
+            _c3dShowNonTriggers = true;
+            _c3dIncludeMesh = false;
+        }
+
         private string TabLabel(Tab tab)
         {
             return tab switch
@@ -188,6 +228,15 @@ namespace MornLib
             {
                 UpdateCache();
                 SceneView.RepaintAll();
+            }
+            if (GUILayout.Button("設定リセット"))
+            {
+                ResetPrefs();
+                _labelStyle = null;
+                _lastUpdateTime = 0f;
+                UpdateCache();
+                SceneView.RepaintAll();
+                Repaint();
             }
 
             EditorGUILayout.Space();
