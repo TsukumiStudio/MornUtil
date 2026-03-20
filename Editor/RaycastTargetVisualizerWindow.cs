@@ -657,7 +657,7 @@ namespace MornLib
             {
                 case BoxCollider box: DrawBoxCollider3D(box, fill, border); break;
                 case SphereCollider sphere: DrawSphereCollider3D(sphere, fill, border); break;
-                case CapsuleCollider capsule: DrawCapsuleCollider3D(capsule, border); break;
+                case CapsuleCollider capsule: DrawCapsuleCollider3D(capsule, fill, border); break;
                 case MeshCollider mesh: DrawMeshCollider3D(mesh, border); break;
             }
 
@@ -712,33 +712,18 @@ namespace MornLib
             var center = t.TransformPoint(sphere.center);
             var scale = Mathf.Max(Mathf.Abs(t.lossyScale.x), Mathf.Abs(t.lossyScale.y), Mathf.Abs(t.lossyScale.z));
             var radius = sphere.radius * scale;
+            var camNormal = GetSceneViewCameraNormal(center);
 
-            if (_showFill)
-            {
-                Handles.color = fill;
-                Handles.DrawSolidDisc(center, Vector3.up, radius);
-                Handles.DrawSolidDisc(center, Vector3.right, radius);
-                Handles.DrawSolidDisc(center, Vector3.forward, radius);
-            }
-            if (_showBorder)
-            {
-                Handles.color = border;
-                Handles.DrawWireDisc(center, Vector3.up, radius, _borderWidth);
-                Handles.DrawWireDisc(center, Vector3.right, radius, _borderWidth);
-                Handles.DrawWireDisc(center, Vector3.forward, radius, _borderWidth);
-            }
+            if (_showFill) { Handles.color = fill; Handles.DrawSolidDisc(center, camNormal, radius); }
+            if (_showBorder) { Handles.color = border; Handles.DrawWireDisc(center, camNormal, radius, _borderWidth); }
         }
 
-        private void DrawCapsuleCollider3D(CapsuleCollider capsule, Color border)
+        private void DrawCapsuleCollider3D(CapsuleCollider capsule, Color fill, Color border)
         {
-            if (!_showBorder) return;
             var t = capsule.transform;
             var center = t.TransformPoint(capsule.center);
             var ls = t.lossyScale;
-            var radius = capsule.radius;
-            var height = capsule.height;
 
-            // direction: 0=X, 1=Y, 2=Z
             Vector3 up;
             float axisScale, radScale;
             switch (capsule.direction)
@@ -760,22 +745,40 @@ namespace MornLib
                     break;
             }
 
-            var r = radius * radScale;
-            var halfH = Mathf.Max(height * axisScale / 2f - r, 0f);
+            var r = capsule.radius * radScale;
+            var halfH = Mathf.Max(capsule.height * axisScale / 2f - r, 0f);
+            var topCenter = center + up * halfH;
+            var bottomCenter = center - up * halfH;
+            var camNormal = GetSceneViewCameraNormal(center);
 
-            Handles.color = border;
-            Handles.DrawWireDisc(center + up * halfH, up, r, _borderWidth);
-            Handles.DrawWireDisc(center - up * halfH, up, r, _borderWidth);
+            // Side lines (perpendicular to both up and camera)
+            var side = Vector3.Cross(up, camNormal).normalized * r;
 
-            // 4 lines connecting the two discs
-            var right = Vector3.Cross(up, Vector3.one != up ? Vector3.one : Vector3.right).normalized;
-            var forward = Vector3.Cross(up, right).normalized;
-            var top = center + up * halfH;
-            var bottom = center - up * halfH;
-            Handles.DrawLine(top + right * r, bottom + right * r, _borderWidth);
-            Handles.DrawLine(top - right * r, bottom - right * r, _borderWidth);
-            Handles.DrawLine(top + forward * r, bottom + forward * r, _borderWidth);
-            Handles.DrawLine(top - forward * r, bottom - forward * r, _borderWidth);
+            if (_showFill)
+            {
+                Handles.color = fill;
+                Handles.DrawSolidDisc(topCenter, camNormal, r);
+                Handles.DrawSolidDisc(bottomCenter, camNormal, r);
+            }
+            if (_showBorder)
+            {
+                Handles.color = border;
+                Handles.DrawWireDisc(topCenter, camNormal, r, _borderWidth);
+                Handles.DrawWireDisc(bottomCenter, camNormal, r, _borderWidth);
+                if (halfH > 0f)
+                {
+                    Handles.DrawLine(topCenter + side, bottomCenter + side, _borderWidth);
+                    Handles.DrawLine(topCenter - side, bottomCenter - side, _borderWidth);
+                }
+            }
+        }
+
+        private static Vector3 GetSceneViewCameraNormal(Vector3 worldPos)
+        {
+            var sv = SceneView.currentDrawingSceneView;
+            if (sv != null && sv.camera != null)
+                return (sv.camera.transform.position - worldPos).normalized;
+            return Vector3.forward;
         }
 
         private void DrawMeshCollider3D(MeshCollider mesh, Color border)
