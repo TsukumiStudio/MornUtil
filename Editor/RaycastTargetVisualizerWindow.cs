@@ -232,7 +232,10 @@ namespace MornLib
                 _labelFontSize = EditorGUILayout.IntSlider("文字サイズ", _labelFontSize, 6, 24);
                 _labelColor = EditorGUILayout.ColorField("文字色", _labelColor);
                 _showLabelBg = EditorGUILayout.Toggle("文字背景", _showLabelBg);
-                _labelBgColor = EditorGUILayout.ColorField("背景色", _labelBgColor);
+                using (new EditorGUI.DisabledGroupScope(!_showLabelBg))
+                {
+                    _labelBgColor = EditorGUILayout.ColorField("背景色", _labelBgColor);
+                }
             }
 
             EditorGUILayout.Space();
