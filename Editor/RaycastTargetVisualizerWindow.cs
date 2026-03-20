@@ -25,8 +25,11 @@ namespace MornLib
         private float _borderWidth = 2f;
         private bool _showBorder = true;
         private bool _showFill = true;
+        private bool _showLabel = true;
         private int _labelFontSize = 10;
         private Color _labelColor = Color.white;
+        private bool _showLabelBg = true;
+        private Color _labelBgColor = new(0f, 0f, 0f, 0.7f);
         private float _updateInterval = 0.1f;
         private float _lastUpdateTime;
         private GUIStyle _labelStyle;
@@ -90,9 +93,13 @@ namespace MornLib
             _showBorder = EditorPrefs.GetBool(PrefPrefix + "ShowBorder", true);
             _borderWidth = EditorPrefs.GetFloat(PrefPrefix + "BorderWidth", 2f);
             _updateInterval = EditorPrefs.GetFloat(PrefPrefix + "UpdateInterval", 0.1f);
+            _showLabel = EditorPrefs.GetBool(PrefPrefix + "ShowLabel", true);
             _labelFontSize = EditorPrefs.GetInt(PrefPrefix + "LabelFontSize", 10);
             if (ColorUtility.TryParseHtmlString(EditorPrefs.GetString(PrefPrefix + "LabelColor", ""), out var lc))
                 _labelColor = lc;
+            _showLabelBg = EditorPrefs.GetBool(PrefPrefix + "ShowLabelBg", true);
+            if (ColorUtility.TryParseHtmlString(EditorPrefs.GetString(PrefPrefix + "LabelBgColor", ""), out var lbc))
+                _labelBgColor = lbc;
 
             _uguiEnabled = EditorPrefs.GetBool(PrefPrefix + "UGUI_Enabled", false);
             _checkCanvasGroup = EditorPrefs.GetBool(PrefPrefix + "CheckCanvasGroup", true);
@@ -126,8 +133,11 @@ namespace MornLib
             EditorPrefs.SetBool(PrefPrefix + "ShowBorder", _showBorder);
             EditorPrefs.SetFloat(PrefPrefix + "BorderWidth", _borderWidth);
             EditorPrefs.SetFloat(PrefPrefix + "UpdateInterval", _updateInterval);
+            EditorPrefs.SetBool(PrefPrefix + "ShowLabel", _showLabel);
             EditorPrefs.SetInt(PrefPrefix + "LabelFontSize", _labelFontSize);
             EditorPrefs.SetString(PrefPrefix + "LabelColor", "#" + ColorUtility.ToHtmlStringRGBA(_labelColor));
+            EditorPrefs.SetBool(PrefPrefix + "ShowLabelBg", _showLabelBg);
+            EditorPrefs.SetString(PrefPrefix + "LabelBgColor", "#" + ColorUtility.ToHtmlStringRGBA(_labelBgColor));
 
             EditorPrefs.SetBool(PrefPrefix + "UGUI_Enabled", _uguiEnabled);
             EditorPrefs.SetBool(PrefPrefix + "CheckCanvasGroup", _checkCanvasGroup);
@@ -152,7 +162,8 @@ namespace MornLib
         {
             var keys = new[]
             {
-                "Tab", "ShowFill", "ShowBorder", "BorderWidth", "UpdateInterval", "LabelFontSize", "LabelColor",
+                "Tab", "ShowFill", "ShowBorder", "BorderWidth", "UpdateInterval",
+                "ShowLabel", "LabelFontSize", "LabelColor", "ShowLabelBg", "LabelBgColor",
                 "UGUI_Enabled", "CheckCanvasGroup", "FillColor", "BorderColor",
                 "C2D_Enabled", "C2D_ShowTriggers", "C2D_ShowNonTriggers", "C2D_FillColor", "C2D_BorderColor",
                 "C3D_Enabled", "C3D_ShowTriggers", "C3D_ShowNonTriggers", "C3D_IncludeMesh", "C3D_FillColor", "C3D_BorderColor",
@@ -165,8 +176,11 @@ namespace MornLib
             _showFill = true;
             _showBorder = true;
             _borderWidth = 2f;
+            _showLabel = true;
             _labelFontSize = 10;
             _labelColor = Color.white;
+            _showLabelBg = true;
+            _labelBgColor = new Color(0f, 0f, 0f, 0.7f);
             _updateInterval = 0.1f;
 
             _uguiEnabled = false;
@@ -211,8 +225,15 @@ namespace MornLib
             _showFill = EditorGUILayout.Toggle("塗りつぶし表示", _showFill);
             _showBorder = EditorGUILayout.Toggle("枠線表示", _showBorder);
             _borderWidth = EditorGUILayout.Slider("枠線の太さ", _borderWidth, 1f, 10f);
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("文字", EditorStyles.boldLabel);
+            _showLabel = EditorGUILayout.Toggle("文字表示", _showLabel);
             _labelFontSize = EditorGUILayout.IntSlider("文字サイズ", _labelFontSize, 6, 24);
             _labelColor = EditorGUILayout.ColorField("文字色", _labelColor);
+            _showLabelBg = EditorGUILayout.Toggle("文字背景", _showLabelBg);
+            _labelBgColor = EditorGUILayout.ColorField("背景色", _labelBgColor);
+
+            EditorGUILayout.Space();
             _updateInterval = EditorGUILayout.Slider("更新間隔", _updateInterval, 0.01f, 1f);
 
             EditorGUILayout.Space();
@@ -495,9 +516,9 @@ namespace MornLib
             if (_labelBgTexture == null)
             {
                 _labelBgTexture = new Texture2D(1, 1);
-                _labelBgTexture.SetPixel(0, 0, new Color(0f, 0f, 0f, 0.7f));
-                _labelBgTexture.Apply();
             }
+            _labelBgTexture.SetPixel(0, 0, _labelBgColor);
+            _labelBgTexture.Apply();
             return _labelBgTexture;
         }
 
@@ -507,16 +528,13 @@ namespace MornLib
             {
                 _labelStyle = new GUIStyle(EditorStyles.whiteMiniLabel)
                 {
-                    fontSize = _labelFontSize,
                     alignment = TextAnchor.MiddleCenter,
                     padding = new RectOffset(4, 4, 2, 2),
-                    normal =
-                    {
-                        textColor = _labelColor,
-                        background = GetLabelBgTexture(),
-                    },
                 };
             }
+            _labelStyle.fontSize = _labelFontSize;
+            _labelStyle.normal.textColor = _labelColor;
+            _labelStyle.normal.background = _showLabelBg ? GetLabelBgTexture() : null;
             return _labelStyle;
         }
 
@@ -545,13 +563,16 @@ namespace MornLib
                 Handles.color = oldColor;
             }
 
-            var style = GetLabelStyle();
-            var center = (guiCorners[0] + guiCorners[2]) / 2f;
-            var labelWidth = _labelFontSize * 10f;
-            var labelHeight = _labelFontSize + 4f;
-            GUI.Label(
-                new Rect(center.x - labelWidth / 2f, center.y - labelHeight / 2f, labelWidth, labelHeight),
-                graphic.GetType().Name, style);
+            if (_showLabel)
+            {
+                var style = GetLabelStyle();
+                var center = (guiCorners[0] + guiCorners[2]) / 2f;
+                var labelWidth = _labelFontSize * 10f;
+                var labelHeight = _labelFontSize + 4f;
+                GUI.Label(
+                    new Rect(center.x - labelWidth / 2f, center.y - labelHeight / 2f, labelWidth, labelHeight),
+                    graphic.GetType().Name, style);
+            }
         }
 
         // --- Collider2D Drawing ---
@@ -572,9 +593,12 @@ namespace MornLib
                 case EdgeCollider2D edge: DrawEdgeCollider2D(edge, border); break;
             }
 
-            var worldPos = col.transform.TransformPoint(col.offset);
-            var labelText = col.isTrigger ? $"{col.gameObject.name} (T)" : col.gameObject.name;
-            Handles.Label(worldPos, labelText, GetLabelStyle());
+            if (_showLabel)
+            {
+                var worldPos = col.transform.TransformPoint(col.offset);
+                var labelText = col.isTrigger ? $"{col.gameObject.name} (T)" : col.gameObject.name;
+                Handles.Label(worldPos, labelText, GetLabelStyle());
+            }
         }
 
         private void DrawBoxCollider2D(BoxCollider2D box, Color fill, Color border)
@@ -680,9 +704,12 @@ namespace MornLib
                 case MeshCollider mesh: DrawMeshCollider3D(mesh, fill, border); break;
             }
 
-            var worldPos = col.bounds.center;
-            var labelText = col.isTrigger ? $"{col.gameObject.name} (T)" : col.gameObject.name;
-            Handles.Label(worldPos, labelText, GetLabelStyle());
+            if (_showLabel)
+            {
+                var worldPos = col.bounds.center;
+                var labelText = col.isTrigger ? $"{col.gameObject.name} (T)" : col.gameObject.name;
+                Handles.Label(worldPos, labelText, GetLabelStyle());
+            }
         }
 
         private void DrawBoxCollider3D(BoxCollider box, Color fill, Color border)
