@@ -25,6 +25,7 @@ namespace MornLib
         private bool _showBorder = true;
         private bool _showFill = true;
         private int _labelFontSize = 10;
+        private Color _labelColor = Color.white;
         private float _updateInterval = 0.1f;
         private float _lastUpdateTime;
         private GUIStyle _labelStyle;
@@ -79,6 +80,8 @@ namespace MornLib
             _borderWidth = EditorPrefs.GetFloat(PrefPrefix + "BorderWidth", 2f);
             _updateInterval = EditorPrefs.GetFloat(PrefPrefix + "UpdateInterval", 0.1f);
             _labelFontSize = EditorPrefs.GetInt(PrefPrefix + "LabelFontSize", 10);
+            if (ColorUtility.TryParseHtmlString(EditorPrefs.GetString(PrefPrefix + "LabelColor", ""), out var lc))
+                _labelColor = lc;
 
             _uguiEnabled = EditorPrefs.GetBool(PrefPrefix + "UGUI_Enabled", false);
             _checkCanvasGroup = EditorPrefs.GetBool(PrefPrefix + "CheckCanvasGroup", true);
@@ -104,6 +107,7 @@ namespace MornLib
             EditorPrefs.SetFloat(PrefPrefix + "BorderWidth", _borderWidth);
             EditorPrefs.SetFloat(PrefPrefix + "UpdateInterval", _updateInterval);
             EditorPrefs.SetInt(PrefPrefix + "LabelFontSize", _labelFontSize);
+            EditorPrefs.SetString(PrefPrefix + "LabelColor", "#" + ColorUtility.ToHtmlStringRGBA(_labelColor));
 
             EditorPrefs.SetBool(PrefPrefix + "UGUI_Enabled", _uguiEnabled);
             EditorPrefs.SetBool(PrefPrefix + "CheckCanvasGroup", _checkCanvasGroup);
@@ -140,6 +144,7 @@ namespace MornLib
             _showBorder = EditorGUILayout.Toggle("枠線表示", _showBorder);
             _borderWidth = EditorGUILayout.Slider("枠線の太さ", _borderWidth, 1f, 10f);
             _labelFontSize = EditorGUILayout.IntSlider("文字サイズ", _labelFontSize, 6, 24);
+            _labelColor = EditorGUILayout.ColorField("文字色", _labelColor);
             _updateInterval = EditorGUILayout.Slider("更新間隔", _updateInterval, 0.01f, 1f);
 
             EditorGUILayout.Space();
@@ -358,6 +363,7 @@ namespace MornLib
                 {
                     fontSize = _labelFontSize,
                     alignment = TextAnchor.MiddleCenter,
+                    normal = { textColor = _labelColor },
                 };
             }
             return _labelStyle;
