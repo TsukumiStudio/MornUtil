@@ -658,7 +658,7 @@ namespace MornLib
                 case BoxCollider box: DrawBoxCollider3D(box, fill, border); break;
                 case SphereCollider sphere: DrawSphereCollider3D(sphere, fill, border); break;
                 case CapsuleCollider capsule: DrawCapsuleCollider3D(capsule, fill, border); break;
-                case MeshCollider mesh: DrawMeshCollider3D(mesh, border); break;
+                case MeshCollider mesh: DrawMeshCollider3D(mesh, fill, border); break;
             }
 
             var worldPos = col.bounds.center;
@@ -781,9 +781,8 @@ namespace MornLib
             return Vector3.forward;
         }
 
-        private void DrawMeshCollider3D(MeshCollider mesh, Color border)
+        private void DrawMeshCollider3D(MeshCollider mesh, Color fill, Color border)
         {
-            if (!_showBorder) return;
             var sharedMesh = mesh.sharedMesh;
             if (sharedMesh == null) return;
 
@@ -791,15 +790,24 @@ namespace MornLib
             var triangles = sharedMesh.triangles;
             var vertices = sharedMesh.vertices;
 
-            Handles.color = border;
             for (var i = 0; i < triangles.Length; i += 3)
             {
                 var a = t.TransformPoint(vertices[triangles[i]]);
                 var b = t.TransformPoint(vertices[triangles[i + 1]]);
                 var c = t.TransformPoint(vertices[triangles[i + 2]]);
-                Handles.DrawLine(a, b, _borderWidth);
-                Handles.DrawLine(b, c, _borderWidth);
-                Handles.DrawLine(c, a, _borderWidth);
+
+                if (_showFill)
+                {
+                    Handles.color = fill;
+                    Handles.DrawAAConvexPolygon(a, b, c);
+                }
+                if (_showBorder)
+                {
+                    Handles.color = border;
+                    Handles.DrawLine(a, b, _borderWidth);
+                    Handles.DrawLine(b, c, _borderWidth);
+                    Handles.DrawLine(c, a, _borderWidth);
+                }
             }
         }
     }
