@@ -572,6 +572,18 @@ namespace MornLib
             var worldCorners = new Vector3[4];
             rt.GetWorldCorners(worldCorners);
 
+            // Skip if any corner is behind the camera
+            var sv = SceneView.currentDrawingSceneView;
+            if (sv != null && sv.camera != null)
+            {
+                var cam = sv.camera;
+                for (var i = 0; i < 4; i++)
+                {
+                    var vp = cam.WorldToViewportPoint(worldCorners[i]);
+                    if (vp.z < 0f) return;
+                }
+            }
+
             var guiCorners = new Vector3[4];
             for (var i = 0; i < 4; i++)
                 guiCorners[i] = HandleUtility.WorldToGUIPoint(worldCorners[i]);
