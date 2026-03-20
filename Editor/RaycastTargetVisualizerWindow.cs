@@ -589,13 +589,8 @@ namespace MornLib
 
             if (_showLabel)
             {
-                var style = GetLabelStyle();
-                var center = (guiCorners[0] + guiCorners[2]) / 2f;
-                var labelWidth = _labelFontSize * 10f;
-                var labelHeight = _labelFontSize + 4f;
-                GUI.Label(
-                    new Rect(center.x - labelWidth / 2f, center.y - labelHeight / 2f, labelWidth, labelHeight),
-                    graphic.GetType().Name, style);
+                var worldCenter = (worldCorners[0] + worldCorners[2]) / 2f;
+                _pendingLabels.Add((worldCenter, graphic.GetType().Name));
             }
         }
 
