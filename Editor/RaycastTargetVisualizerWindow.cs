@@ -597,11 +597,38 @@ namespace MornLib
         {
             if (!_showBorder) return;
             var t = box.transform;
-            var center = t.TransformPoint(box.center);
-            var size = Vector3.Scale(box.size, t.lossyScale);
+            var half = box.size / 2f;
+            var offsets = new[]
+            {
+                new Vector3(-half.x, -half.y, -half.z),
+                new Vector3(-half.x, -half.y, half.z),
+                new Vector3(-half.x, half.y, -half.z),
+                new Vector3(-half.x, half.y, half.z),
+                new Vector3(half.x, -half.y, -half.z),
+                new Vector3(half.x, -half.y, half.z),
+                new Vector3(half.x, half.y, -half.z),
+                new Vector3(half.x, half.y, half.z),
+            };
+            var verts = new Vector3[8];
+            for (var i = 0; i < 8; i++)
+                verts[i] = t.TransformPoint(box.center + offsets[i]);
 
             Handles.color = border;
-            Handles.DrawWireCube(center, size);
+            // bottom
+            Handles.DrawLine(verts[0], verts[1], _borderWidth);
+            Handles.DrawLine(verts[1], verts[5], _borderWidth);
+            Handles.DrawLine(verts[5], verts[4], _borderWidth);
+            Handles.DrawLine(verts[4], verts[0], _borderWidth);
+            // top
+            Handles.DrawLine(verts[2], verts[3], _borderWidth);
+            Handles.DrawLine(verts[3], verts[7], _borderWidth);
+            Handles.DrawLine(verts[7], verts[6], _borderWidth);
+            Handles.DrawLine(verts[6], verts[2], _borderWidth);
+            // pillars
+            Handles.DrawLine(verts[0], verts[2], _borderWidth);
+            Handles.DrawLine(verts[1], verts[3], _borderWidth);
+            Handles.DrawLine(verts[4], verts[6], _borderWidth);
+            Handles.DrawLine(verts[5], verts[7], _borderWidth);
         }
 
         private void DrawSphereCollider3D(SphereCollider sphere, Color border)
