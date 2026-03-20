@@ -687,12 +687,24 @@ namespace MornLib
 
             if (_showFill)
             {
-                Handles.DrawSolidRectangleWithOutline(new[] { v[0], v[1], v[5], v[4] }, fill, Color.clear); // bottom
-                Handles.DrawSolidRectangleWithOutline(new[] { v[2], v[3], v[7], v[6] }, fill, Color.clear); // top
-                Handles.DrawSolidRectangleWithOutline(new[] { v[0], v[1], v[3], v[2] }, fill, Color.clear); // left
-                Handles.DrawSolidRectangleWithOutline(new[] { v[4], v[5], v[7], v[6] }, fill, Color.clear); // right
-                Handles.DrawSolidRectangleWithOutline(new[] { v[0], v[4], v[6], v[2] }, fill, Color.clear); // front
-                Handles.DrawSolidRectangleWithOutline(new[] { v[1], v[5], v[7], v[3] }, fill, Color.clear); // back
+                var camPos = GetSceneViewCameraPosition();
+                var faces = new[]
+                {
+                    new[] { v[0], v[1], v[5], v[4] }, // bottom (-Y)
+                    new[] { v[2], v[3], v[7], v[6] }, // top (+Y)
+                    new[] { v[0], v[1], v[3], v[2] }, // left (-X)
+                    new[] { v[4], v[5], v[7], v[6] }, // right (+X)
+                    new[] { v[0], v[4], v[6], v[2] }, // front (-Z)
+                    new[] { v[1], v[5], v[7], v[3] }, // back (+Z)
+                };
+                foreach (var face in faces)
+                {
+                    var faceCenter = (face[0] + face[1] + face[2] + face[3]) / 4f;
+                    var faceNormal = Vector3.Cross(face[1] - face[0], face[2] - face[1]).normalized;
+                    // Only draw faces facing the camera
+                    if (Vector3.Dot(faceNormal, camPos - faceCenter) > 0f)
+                        Handles.DrawSolidRectangleWithOutline(face, fill, Color.clear);
+                }
             }
             if (_showBorder)
             {
@@ -818,12 +830,17 @@ namespace MornLib
             }
         }
 
-        private static Vector3 GetSceneViewCameraNormal(Vector3 worldPos)
+        private static Vector3 GetSceneViewCameraPosition()
         {
             var sv = SceneView.currentDrawingSceneView;
             if (sv != null && sv.camera != null)
-                return (sv.camera.transform.position - worldPos).normalized;
-            return Vector3.forward;
+                return sv.camera.transform.position;
+            return Vector3.zero;
+        }
+
+        private static Vector3 GetSceneViewCameraNormal(Vector3 worldPos)
+        {
+            return (GetSceneViewCameraPosition() - worldPos).normalized;
         }
 
         private void DrawMeshCollider3D(MeshCollider mesh, Color fill, Color border)
