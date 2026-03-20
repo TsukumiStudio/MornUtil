@@ -690,12 +690,12 @@ namespace MornLib
                 var camPos = GetSceneViewCameraPosition();
                 var faces = new[]
                 {
-                    new[] { v[0], v[1], v[5], v[4] }, // bottom (-Y)
-                    new[] { v[2], v[3], v[7], v[6] }, // top (+Y)
-                    new[] { v[0], v[1], v[3], v[2] }, // left (-X)
-                    new[] { v[4], v[5], v[7], v[6] }, // right (+X)
-                    new[] { v[0], v[4], v[6], v[2] }, // front (-Z)
-                    new[] { v[1], v[5], v[7], v[3] }, // back (+Z)
+                    new[] { v[0], v[4], v[5], v[1] }, // bottom (-Y): outward normal -Y
+                    new[] { v[2], v[3], v[7], v[6] }, // top (+Y): outward normal +Y
+                    new[] { v[0], v[1], v[3], v[2] }, // left (-X): outward normal -X
+                    new[] { v[4], v[6], v[7], v[5] }, // right (+X): outward normal +X
+                    new[] { v[0], v[2], v[6], v[4] }, // front (-Z): outward normal -Z
+                    new[] { v[1], v[5], v[7], v[3] }, // back (+Z): outward normal +Z
                 };
                 foreach (var face in faces)
                 {
