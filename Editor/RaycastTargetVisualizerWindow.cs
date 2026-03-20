@@ -132,20 +132,28 @@ namespace MornLib
             EditorGUILayout.LabelField("Raycastターゲット可視化", EditorStyles.boldLabel);
             EditorGUILayout.Space();
 
-            // Tab
             EditorGUI.BeginChangeCheck();
+
+            // Common settings (top)
+            EditorGUILayout.LabelField("共通設定", EditorStyles.boldLabel);
+            _showFill = EditorGUILayout.Toggle("塗りつぶし表示", _showFill);
+            _showBorder = EditorGUILayout.Toggle("枠線表示", _showBorder);
+            if (_showBorder)
+            {
+                _borderWidth = EditorGUILayout.Slider("枠線の太さ", _borderWidth, 1f, 10f);
+            }
+            _labelFontSize = EditorGUILayout.IntSlider("文字サイズ", _labelFontSize, 6, 24);
+            _updateInterval = EditorGUILayout.Slider("更新間隔", _updateInterval, 0.01f, 1f);
+
+            EditorGUILayout.Space();
+
+            // Tab
             var tabLabels = new[] { TabLabel(Tab.UGUI), TabLabel(Tab.Collider2D) };
             _currentTab = (Tab)GUILayout.Toolbar((int)_currentTab, tabLabels);
-            if (EditorGUI.EndChangeCheck())
-            {
-                SavePrefs();
-            }
 
             EditorGUILayout.Space();
 
             // Tab-specific enable + settings
-            EditorGUI.BeginChangeCheck();
-
             switch (_currentTab)
             {
                 case Tab.UGUI:
@@ -165,17 +173,6 @@ namespace MornLib
                     }
                     break;
             }
-
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("共通設定", EditorStyles.boldLabel);
-            _showFill = EditorGUILayout.Toggle("塗りつぶし表示", _showFill);
-            _showBorder = EditorGUILayout.Toggle("枠線表示", _showBorder);
-            if (_showBorder)
-            {
-                _borderWidth = EditorGUILayout.Slider("枠線の太さ", _borderWidth, 1f, 10f);
-            }
-            _labelFontSize = EditorGUILayout.IntSlider("文字サイズ", _labelFontSize, 6, 24);
-            _updateInterval = EditorGUILayout.Slider("更新間隔", _updateInterval, 0.01f, 1f);
 
             if (EditorGUI.EndChangeCheck())
             {
