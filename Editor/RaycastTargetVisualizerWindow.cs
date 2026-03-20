@@ -543,7 +543,8 @@ namespace MornLib
         {
             var fill = _c2dFillColor;
             var border = _c2dBorderColor;
-            if (col.isTrigger) { fill.a *= 0.5f; border.a *= 0.7f; }
+
+
 
             switch (col)
             {
@@ -651,7 +652,8 @@ namespace MornLib
         {
             var fill = _c3dFillColor;
             var border = _c3dBorderColor;
-            if (col.isTrigger) { fill.a *= 0.5f; border.a *= 0.7f; }
+
+
 
             switch (col)
             {
