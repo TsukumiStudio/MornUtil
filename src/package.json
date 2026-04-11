@@ -1,0 +1,18 @@
+{
+  "name": "com.tsukumistudio.mornutil",
+  "version": "1.0.0",
+  "displayName": "MornUtil",
+  "description": "Unity 開発向けのユーティリティ機能を提供する基盤ライブラリ。拡張メソッド、数学計算、オブジェクトプール、非同期タスク処理、暗号化、UI ヘルパーなどを統合。",
+  "unity": "6000.0",
+  "license": "Unlicense",
+  "author": {
+    "name": "TsukumiStudio"
+  },
+  "keywords": [
+    "utility",
+    "extension",
+    "math",
+    "objectpool",
+    "helper"
+  ]
+}
