@@ -61,29 +61,15 @@ namespace MornLib
             }
 
             EditorGUILayout.Space(5);
-            EditorGUILayout.LabelField($"結果: {_results.Count} 件");
+
+            var filtered = FilterResults();
+            EditorGUILayout.LabelField($"結果: {filtered.Count} 件");
 
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
 
             var displayCount = 0;
-            foreach (var info in _results)
+            foreach (var info in filtered)
             {
-                if (!string.IsNullOrEmpty(_filter) && !info.AssetPath.ToLower().Contains(_filter.ToLower()))
-                {
-                    continue;
-                }
-
-                if (!string.IsNullOrEmpty(_componentFilter))
-                {
-                    var cf = _componentFilter.ToLower();
-                    if (!info.ComponentName.ToLower().Contains(cf) &&
-                        !info.PropertyPath.ToLower().Contains(cf) &&
-                        !info.GameObjectName.ToLower().Contains(cf))
-                    {
-                        continue;
-                    }
-                }
-
                 if (displayCount >= 100)
                 {
                     EditorGUILayout.LabelField("... 表示上限 100 件に達しました。フィルターで絞り込んでください。", EditorStyles.miniLabel);
@@ -108,6 +94,24 @@ namespace MornLib
             }
 
             EditorGUILayout.EndScrollView();
+        }
+
+        private List<NoneReferenceInfo> FilterResults()
+        {
+            return _results.Where(info =>
+            {
+                if (!string.IsNullOrEmpty(_filter) && !info.AssetPath.ToLower().Contains(_filter.ToLower()))
+                    return false;
+                if (!string.IsNullOrEmpty(_componentFilter))
+                {
+                    var cf = _componentFilter.ToLower();
+                    if (!info.ComponentName.ToLower().Contains(cf) &&
+                        !info.PropertyPath.ToLower().Contains(cf) &&
+                        !info.GameObjectName.ToLower().Contains(cf))
+                        return false;
+                }
+                return true;
+            }).ToList();
         }
 
         private void Search()
