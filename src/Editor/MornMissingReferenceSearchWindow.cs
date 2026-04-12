@@ -173,21 +173,16 @@ namespace MornLib
         {
             var asset = AssetDatabase.LoadAssetAtPath<Object>(assetPath);
             if (asset == null) return;
-            
-            var dependencies = EditorUtility.CollectDependencies(new[] { asset });
-            
-            if (dependencies.Any(d => d == null))
+
+            // Prefabの場合
+            if (asset is GameObject gameObject)
             {
-                // Prefabの場合
-                if (asset is GameObject gameObject)
-                {
-                    CheckGameObjectForMissingReferences(gameObject, assetPath);
-                }
-                // ScriptableObjectの場合
-                else if (asset is ScriptableObject)
-                {
-                    CheckScriptableObjectForMissingReferences(asset, assetPath);
-                }
+                CheckGameObjectForMissingReferences(gameObject, assetPath);
+            }
+            // ScriptableObjectの場合
+            else if (asset is ScriptableObject)
+            {
+                CheckScriptableObjectForMissingReferences(asset, assetPath);
             }
         }
 
