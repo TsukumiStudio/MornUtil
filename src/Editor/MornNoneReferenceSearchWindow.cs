@@ -65,6 +65,7 @@ namespace MornLib
 
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
 
+            var displayCount = 0;
             foreach (var info in _results)
             {
                 if (!string.IsNullOrEmpty(_filter) && !info.AssetPath.ToLower().Contains(_filter.ToLower()))
@@ -83,6 +84,12 @@ namespace MornLib
                     }
                 }
 
+                if (displayCount >= 100)
+                {
+                    EditorGUILayout.LabelField("... 表示上限 100 件に達しました。フィルターで絞り込んでください。", EditorStyles.miniLabel);
+                    break;
+                }
+
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     if (GUILayout.Button(System.IO.Path.GetFileName(info.AssetPath), EditorStyles.linkLabel, GUILayout.ExpandWidth(false)))
@@ -96,6 +103,8 @@ namespace MornLib
 
                     EditorGUILayout.LabelField($"{info.GameObjectName} > {info.ComponentName}.{info.PropertyPath}", EditorStyles.miniLabel);
                 }
+
+                displayCount++;
             }
 
             EditorGUILayout.EndScrollView();
