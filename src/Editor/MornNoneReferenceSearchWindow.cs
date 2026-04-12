@@ -50,7 +50,7 @@ namespace MornLib
             using (new EditorGUILayout.HorizontalScope())
             {
                 _filter = EditorGUILayout.TextField("パスフィルター:", _filter);
-                _componentFilter = EditorGUILayout.TextField("コンポーネント:", _componentFilter, GUILayout.Width(200));
+                _componentFilter = EditorGUILayout.TextField("キーワード:", _componentFilter, GUILayout.Width(200));
             }
 
             EditorGUILayout.Space(5);
@@ -72,9 +72,15 @@ namespace MornLib
                     continue;
                 }
 
-                if (!string.IsNullOrEmpty(_componentFilter) && !info.ComponentName.ToLower().Contains(_componentFilter.ToLower()))
+                if (!string.IsNullOrEmpty(_componentFilter))
                 {
-                    continue;
+                    var cf = _componentFilter.ToLower();
+                    if (!info.ComponentName.ToLower().Contains(cf) &&
+                        !info.PropertyPath.ToLower().Contains(cf) &&
+                        !info.GameObjectName.ToLower().Contains(cf))
+                    {
+                        continue;
+                    }
                 }
 
                 using (new EditorGUILayout.HorizontalScope())
