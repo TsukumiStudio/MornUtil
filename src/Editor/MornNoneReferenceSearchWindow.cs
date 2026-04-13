@@ -22,6 +22,7 @@ namespace MornLib
         private bool _searchPrefabs = true;
         private bool _searchScriptableObjects;
         private bool _searchScenes;
+        private bool _assetsScriptsOnly = true;
         private string _filter = "";
         private string _componentFilter = "";
 
@@ -45,6 +46,12 @@ namespace MornLib
                 _searchPrefabs = EditorGUILayout.ToggleLeft("Prefab", _searchPrefabs, GUILayout.Width(80));
                 _searchScriptableObjects = EditorGUILayout.ToggleLeft("ScriptableObject", _searchScriptableObjects, GUILayout.Width(130));
                 _searchScenes = EditorGUILayout.ToggleLeft("Scene", _searchScenes, GUILayout.Width(80));
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUILayout.Label("絞り込み:", GUILayout.Width(60));
+                _assetsScriptsOnly = EditorGUILayout.ToggleLeft("Assets/配下のスクリプトのみ", _assetsScriptsOnly, GUILayout.Width(220));
             }
 
             using (new EditorGUILayout.HorizontalScope())
@@ -142,8 +149,9 @@ namespace MornLib
                 {
                     CheckGameObject(go, assetPath);
                 }
-                else if (asset is ScriptableObject)
+                else if (asset is ScriptableObject so)
                 {
+                    if (_assetsScriptsOnly && !IsAssetsScript(so)) continue;
                     CheckSerializedObject(asset, assetPath, asset.name, asset.GetType().Name);
                 }
             }
@@ -157,6 +165,7 @@ namespace MornLib
             foreach (var component in root.GetComponentsInChildren<Component>(true))
             {
                 if (component == null) continue;
+                if (_assetsScriptsOnly && !IsAssetsScript(component)) continue;
 
                 var goName = component.gameObject.name;
                 var compName = component.GetType().Name;
@@ -215,6 +224,27 @@ namespace MornLib
                    path == "m_PrefabAsset" ||
                    path.StartsWith("m_Children.") ||
                    path.StartsWith("m_Component.");
+        }
+
+        private static bool IsAssetsScript(Component component)
+        {
+            if (component is MonoBehaviour mb)
+            {
+                var script = MonoScript.FromMonoBehaviour(mb);
+                if (script == null) return false;
+                var path = AssetDatabase.GetAssetPath(script);
+                return !string.IsNullOrEmpty(path) && path.StartsWith("Assets/");
+            }
+
+            return false;
+        }
+
+        private static bool IsAssetsScript(ScriptableObject so)
+        {
+            var script = MonoScript.FromScriptableObject(so);
+            if (script == null) return false;
+            var path = AssetDatabase.GetAssetPath(script);
+            return !string.IsNullOrEmpty(path) && path.StartsWith("Assets/");
         }
     }
 }

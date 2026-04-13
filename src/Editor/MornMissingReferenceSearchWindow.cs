@@ -13,6 +13,7 @@ namespace MornLib
             public string ComponentName { get; set; }
             public string PropertyPath { get; set; }
             public Object Asset { get; set; }
+            public bool IsAssetsScript { get; set; }
         }
 
         private List<MissingReferenceInfo> _missingReferences = new List<MissingReferenceInfo>();
@@ -22,6 +23,7 @@ namespace MornLib
         private bool _searchPrefabsOnly = true;
         private bool _searchScriptableObjects = true;
         private bool _searchScenes = false;
+        private bool _assetsScriptsOnly = true;
 
         [MenuItem("Tools/MornUtil/Missing参照検索")]
         private static void ShowWindow()
@@ -48,12 +50,16 @@ namespace MornLib
             using (new EditorGUILayout.HorizontalScope())
             {
                 _searchFilter = EditorGUILayout.TextField("フィルター:", _searchFilter);
-                
+
                 if (GUILayout.Button("クリア", GUILayout.Width(60)))
                 {
                     _searchFilter = "";
                 }
             }
+
+            _assetsScriptsOnly = EditorGUILayout.ToggleLeft(
+                "Assets/ 配下のスクリプトのみ表示 (SpriteRenderer等の組み込み/パッケージを除外)",
+                _assetsScriptsOnly);
             
             EditorGUILayout.Space();
             
@@ -74,18 +80,24 @@ namespace MornLib
             
             EditorGUILayout.Space();
             
-            if (_missingReferences.Count > 0)
+            var visibleReferences = _missingReferences
+                .Where(info => !_assetsScriptsOnly || info.IsAssetsScript)
+                .ToList();
+            if (visibleReferences.Count > 0)
             {
-                EditorGUILayout.LabelField($"Missing参照が見つかりました: {_missingReferences.Count} 件");
+                EditorGUILayout.LabelField(
+                    _assetsScriptsOnly
+                        ? $"Missing参照: {visibleReferences.Count} 件 (全体 {_missingReferences.Count} 件中)"
+                        : $"Missing参照が見つかりました: {visibleReferences.Count} 件");
                 EditorGUILayout.Space();
-                
+
                 using (var scrollView = new EditorGUILayout.ScrollViewScope(_scrollPosition))
                 {
                     _scrollPosition = scrollView.scrollPosition;
-                    
-                    foreach (var info in _missingReferences)
+
+                    foreach (var info in visibleReferences)
                     {
-                        if (!string.IsNullOrEmpty(_searchFilter) && 
+                        if (!string.IsNullOrEmpty(_searchFilter) &&
                             !info.AssetPath.ToLower().Contains(_searchFilter.ToLower()))
                         {
                             continue;
@@ -199,19 +211,21 @@ namespace MornLib
                         AssetPath = assetPath,
                         ComponentName = "Missing Script",
                         PropertyPath = gameObject.name,
-                        Asset = gameObject
+                        Asset = gameObject,
+                        IsAssetsScript = true,
                     });
                     continue;
                 }
-                
+
+                var isAssetsScript = IsScriptUnderAssets(component);
                 var serializedObject = new SerializedObject(component);
                 var property = serializedObject.GetIterator();
-                
+
                 while (property.NextVisible(true))
                 {
                     if (property.propertyType == SerializedPropertyType.ObjectReference)
                     {
-                        if (property.objectReferenceValue == null && 
+                        if (property.objectReferenceValue == null &&
                             property.objectReferenceInstanceIDValue != 0)
                         {
                             _missingReferences.Add(new MissingReferenceInfo
@@ -219,7 +233,8 @@ namespace MornLib
                                 AssetPath = assetPath,
                                 ComponentName = component.GetType().Name,
                                 PropertyPath = property.propertyPath,
-                                Asset = gameObject
+                                Asset = gameObject,
+                                IsAssetsScript = isAssetsScript,
                             });
                         }
                     }
@@ -229,14 +244,15 @@ namespace MornLib
 
         private void CheckScriptableObjectForMissingReferences(Object scriptableObject, string assetPath)
         {
+            var isAssetsScript = IsScriptUnderAssets(scriptableObject);
             var serializedObject = new SerializedObject(scriptableObject);
             var property = serializedObject.GetIterator();
-            
+
             while (property.NextVisible(true))
             {
                 if (property.propertyType == SerializedPropertyType.ObjectReference)
                 {
-                    if (property.objectReferenceValue == null && 
+                    if (property.objectReferenceValue == null &&
                         property.objectReferenceInstanceIDValue != 0)
                     {
                         _missingReferences.Add(new MissingReferenceInfo
@@ -244,11 +260,33 @@ namespace MornLib
                             AssetPath = assetPath,
                             ComponentName = scriptableObject.GetType().Name,
                             PropertyPath = property.propertyPath,
-                            Asset = scriptableObject
+                            Asset = scriptableObject,
+                            IsAssetsScript = isAssetsScript,
                         });
                     }
                 }
             }
+        }
+
+        private static bool IsScriptUnderAssets(Object target)
+        {
+            MonoScript monoScript = null;
+            if (target is MonoBehaviour monoBehaviour)
+            {
+                monoScript = MonoScript.FromMonoBehaviour(monoBehaviour);
+            }
+            else if (target is ScriptableObject scriptableObject)
+            {
+                monoScript = MonoScript.FromScriptableObject(scriptableObject);
+            }
+
+            if (monoScript == null)
+            {
+                return false;
+            }
+
+            var path = AssetDatabase.GetAssetPath(monoScript);
+            return !string.IsNullOrEmpty(path) && path.StartsWith("Assets/");
         }
     }
 }
