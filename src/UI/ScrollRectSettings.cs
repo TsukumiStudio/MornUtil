@@ -16,10 +16,6 @@ namespace MornLib
         public float Elasticity => _elasticity;
         public bool Inertia => _inertia;
         public float DecelerationRate => _decelerationRate;
-#if !UNITY_EDITOR && UNITY_WEBGL
-        public float ScrollSensitivity => _scrollSensitivityWebGL;
-#else
-        public float ScrollSensitivity => _scrollSensitivity;
-#endif
+        public float ScrollSensitivity => Application.platform == RuntimePlatform.WebGLPlayer ? _scrollSensitivityWebGL : _scrollSensitivity;
     }
 }

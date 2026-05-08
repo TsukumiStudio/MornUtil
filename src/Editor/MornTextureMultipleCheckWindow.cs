@@ -289,7 +289,7 @@ namespace MornLib
                         IsHeightMultipleOf4 = isHeightMultiple,
                         RecommendedWidth = GetNextMultiple(width, _multipleValue),
                         RecommendedHeight = GetNextMultiple(height, _multipleValue),
-                        Format = importer.textureFormat,
+                        Format = importer.GetDefaultPlatformTextureSettings().format,
                         IsPowerOfTwo = isPowerOfTwo,
                         FileSize = fileInfo.Exists ? fileInfo.Length : 0
                     });

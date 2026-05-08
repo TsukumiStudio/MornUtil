@@ -351,11 +351,13 @@ namespace MornLib
             }
             else if (_targetController is AnimatorOverrideController overrideController)
             {
-                foreach (var clipPair in overrideController.clips)
+                var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>(overrideController.overridesCount);
+                overrideController.GetOverrides(overrides);
+                foreach (var clipPair in overrides)
                 {
-                    if (clipPair.overrideClip != null && !clips.Contains(clipPair.overrideClip))
+                    if (clipPair.Value != null && !clips.Contains(clipPair.Value))
                     {
-                        clips.Add(clipPair.overrideClip);
+                        clips.Add(clipPair.Value);
                     }
                 }
             }
